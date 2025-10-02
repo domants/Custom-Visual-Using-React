@@ -34,15 +34,15 @@ Follow the setups from microsofts documentations:
 ```
 pbiviz install-cert
 ```
+<img width="597" height="244" alt="image" src="https://github.com/user-attachments/assets/e2aa22a3-0824-4543-ba93-0353b50f93b9" />
 
 
 
 
 ---------
-Note: When you add Certicate and run to an error see below:
+Note: When you add Certicate and run to an error see the link/run the command below:
 https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core
 
-run this command in your cmd:
 ```
 dotnet tool update --global PowerShell
 ```
@@ -57,14 +57,14 @@ npm i -g powerbi-visuals-tools
 
 ---------
 
-Enable Developer mode is working only in Web Service:
+Enable Developer mode - The working is only in Web Service - Not sure for Desktop PBI App:
 https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi
 
 
 ---------
 # Enhancing with D3.js
 
-On reactCircleCard app, expand the node_modules folder to check the packages d3, @type/d3, core-js, and powerbi-visuals-api are installed. If you can’t find any of these, just run the npm install for all the missing packages:
+On app file, expand the node_modules folder to check the packages d3, @type/d3, core-js, and powerbi-visuals-api are installed. If you can’t find any of these, just run the npm install for all the missing packages:
 ```
 npm install d3 @types/d3 core-js powerbi-visuals-api
 ```
