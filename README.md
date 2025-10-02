@@ -34,7 +34,6 @@ Follow the setups from microsofts documentations:
 ```
 pbiviz install-cert
 ```
-<img width="1104" height="175" alt="image" src="https://github.com/user-attachments/assets/36c6f3c3-97ec-4703-abde-6bddb7387345" />
 
 
 
@@ -47,7 +46,6 @@ run this command in your cmd:
 ```
 dotnet tool update --global PowerShell
 ```
-<img width="1114" height="627" alt="image" src="https://github.com/user-attachments/assets/c225d76f-4528-4339-8aaf-a013eb99985b" />
 
 
 
@@ -61,7 +59,6 @@ npm i -g powerbi-visuals-tools
 
 Enable Developer mode is working only in Web Service:
 https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi
-<img width="892" height="615" alt="image" src="https://github.com/user-attachments/assets/2e69cafd-da37-42e0-914e-921034fd329c" />
 
 
 ---------
@@ -71,7 +68,6 @@ On reactCircleCard app, expand the node_modules folder to check the packages d3,
 ```
 npm install d3 @types/d3 core-js powerbi-visuals-api
 ```
-<img width="782" height="257" alt="image" src="https://github.com/user-attachments/assets/cb997ace-f47f-4427-81d0-e8ba76041474" />
 
 
 We've got all we need now to start developing our first visual using D3.js.
