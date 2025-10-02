@@ -13,3 +13,68 @@ With this custom visual, you can specify the Tasks, Start Date, Duration and %Co
 You can also control the color of the bar with a Legend. You can use any relevant field from your project as Legend for example task type for this purpose. Additionally, you can also specify the resource field, which would be listed next the bar in the Gantt.
 
 See also [Gantt chart at Microsoft Office store](https://store.office.com/en-us/app.aspx?assetid=WA104380765&sourcecorrid=968c5e90-8711-48fe-b9b4-a15ad9fe8dc4&searchapppos=0&ui=en-US&rs=en-US&ad=US&appredirect=false)
+
+
+# Develop-Custom-Visual-Using-React
+---------
+Follow the setups from microsofts documentations:
+*https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop*
+---------
+### Command to add certificate: open CMD and run below command:
+```
+pbiviz install-cert
+```
+<img width="1104" height="175" alt="image" src="https://github.com/user-attachments/assets/36c6f3c3-97ec-4703-abde-6bddb7387345" />
+
+
+
+
+---------
+Note: When you add Certicate and run to an error see below:
+https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core
+
+run this command in your cmd:
+```
+dotnet tool update --global PowerShell
+```
+<img width="1114" height="627" alt="image" src="https://github.com/user-attachments/assets/c225d76f-4528-4339-8aaf-a013eb99985b" />
+
+
+
+---------
+install the PowerBI Visual Tools (pbiviz) package.
+```
+npm i -g powerbi-visuals-tools
+```
+
+---------
+
+Enable Developer mode is working only in Web Service:
+https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi
+<img width="892" height="615" alt="image" src="https://github.com/user-attachments/assets/2e69cafd-da37-42e0-914e-921034fd329c" />
+
+
+---------
+# Enhancing with D3.js
+
+On reactCircleCard app, expand the node_modules folder to check the packages d3, @type/d3, core-js, and powerbi-visuals-api are installed. If you can’t find any of these, just run the npm install for all the missing packages:
+```
+npm install d3 @types/d3 core-js powerbi-visuals-api
+```
+<img width="782" height="257" alt="image" src="https://github.com/user-attachments/assets/cb997ace-f47f-4427-81d0-e8ba76041474" />
+
+
+We've got all we need now to start developing our first visual using D3.js.
+
+---------
+Now proceed and Create a development project by following the link below from MSFT:
+https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual
+
+
+---------
+When testing the visual and don't see any changes go to below link and authorize your browser:
+```
+https://localhost:8080/assets
+```
+
+
