@@ -1,5 +1,13 @@
 Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
 
+
+------
+Clone repo and install the PowerBI Visual Tools (pbiviz) package:
+```
+npm i -g powerbi-visuals-tools
+```
+
+------
 # powerbi-visuals-gantt
 [![Build Status](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml)
 
