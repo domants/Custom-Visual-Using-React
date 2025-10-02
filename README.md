@@ -1,5 +1,6 @@
 # Build a Custom Power BI Visual with React
 
+Below is the GitHub repository I'm using as a reference for this repo.
 Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
 
 ---
