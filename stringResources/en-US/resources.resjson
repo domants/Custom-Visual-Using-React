@@ -1,4 +1,12 @@
 {
+	"Card_MilestoneLabels": "Milestone labels",
+	"Visual_MilestoneText": "Milestone text",
+	"Visual_Position": "Position",
+	"Visual_FontSize": "Font size",
+	"Visual_Color": "Color",
+	"Visual_OffsetX": "Offset X",
+	"Visual_OffsetY": "Offset Y",
+	"Visual_MaxWidth": "Max width",
 	"Role_Legend": "Legend",
 	"Role_Task": "Task",
 	"Role_Parent": "Parent",

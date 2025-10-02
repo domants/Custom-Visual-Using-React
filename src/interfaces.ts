@@ -50,129 +50,134 @@ import { GanttChartSettingsModel } from "./ganttChartSettingsModels";
 export type DayOffData = [Date, number];
 
 export interface DaysOffDataForAddition {
-    list: DayOffData[];
-    amountOfLastDaysOff: number;
+  list: DayOffData[];
+  amountOfLastDaysOff: number;
 }
 
 export interface TaskDaysOff {
-    id: number;
-    daysOff: DayOffData;
+  id: number;
+  daysOff: DayOffData;
 }
 
 export interface ExtraInformation {
-    displayName: string;
-    value: string;
+  displayName: string;
+  value: string;
 }
 
 export interface Task extends SelectableDataPoint {
-    index: number;
-    name: string;
-    start: Date;
-    duration: number;
-    completion: number;
-    resource: string;
-    end: Date;
-    parent: string;
-    children: Task[];
-    visibility: boolean;
-    taskType: string;
-    description: string;
-    color: string;
-    tooltipInfo: VisualTooltipDataItem[];
-    extraInformation: ExtraInformation[];
-    daysOffList: DayOffData[];
-    wasDowngradeDurationUnit: boolean;
-    stepDurationTransformation?: number;
-    highlight?: boolean;
-    Milestones?: Milestone[];
+  index: number;
+  name: string;
+  start: Date;
+  duration: number;
+  completion: number;
+  resource: string;
+  end: Date;
+  parent: string;
+  children: Task[];
+  visibility: boolean;
+  taskType: string;
+  description: string;
+  color: string;
+  tooltipInfo: VisualTooltipDataItem[];
+  extraInformation: ExtraInformation[];
+  daysOffList: DayOffData[];
+  wasDowngradeDurationUnit: boolean;
+  stepDurationTransformation?: number;
+  highlight?: boolean;
+  Milestones?: Milestone[];
 }
 
 export interface GroupedTask {
-    index: number;
-    name: string;
-    tasks: Task[];
+  index: number;
+  name: string;
+  tasks: Task[];
 }
 
 export interface GanttChartFormatters {
-    startDateFormatter: IValueFormatter;
-    completionFormatter: IValueFormatter;
+  startDateFormatter: IValueFormatter;
+  completionFormatter: IValueFormatter;
 }
 
 export interface GanttViewModel {
-    dataView: DataView;
-    settings: GanttChartSettingsModel;
-    tasks: Task[];
-    legendData: LegendData;
-    milestonesData: MilestoneData;
-    taskTypes: TaskTypes;
-    isDurationFilled: boolean;
-    isEndDateFilled: boolean;
-    isParentFilled: boolean;
-    isResourcesFilled: boolean;
+  dataView: DataView;
+  settings: GanttChartSettingsModel;
+  tasks: Task[];
+  legendData: LegendData;
+  milestonesData: MilestoneData;
+  taskTypes: TaskTypes;
+  isDurationFilled: boolean;
+  isEndDateFilled: boolean;
+  isParentFilled: boolean;
+  isResourcesFilled: boolean;
 }
 
-export interface TaskTypes { /*TODO: change to more proper name*/
-    typeName: string;
-    types: TaskTypeMetadata[];
+export interface TaskTypes {
+  /*TODO: change to more proper name*/ typeName: string;
+  types: TaskTypeMetadata[];
 }
 
 export interface TaskTypeMetadata {
-    name: string;
-    columnGroup: DataViewValueColumnGroup;
-    selectionColumn: DataViewCategoryColumn;
+  name: string;
+  columnGroup: DataViewValueColumnGroup;
+  selectionColumn: DataViewCategoryColumn;
 }
 
 export interface GanttCalculateScaleAndDomainOptions {
-    viewport: IViewport;
-    margin: IMargin;
-    showCategoryAxisLabel: boolean;
-    showValueAxisLabel: boolean;
-    forceMerge: boolean;
-    categoryAxisScaleType: string;
-    valueAxisScaleType: string;
-    trimOrdinalDataOnOverflow: boolean;
-    forcedTickCount?: number;
-    forcedYDomain?: any[];
-    forcedXDomain?: any[];
-    ensureXDomain?: any;
-    ensureYDomain?: any;
-    categoryAxisDisplayUnits?: number;
-    categoryAxisPrecision?: number;
-    valueAxisDisplayUnits?: number;
-    valueAxisPrecision?: number;
+  viewport: IViewport;
+  margin: IMargin;
+  showCategoryAxisLabel: boolean;
+  showValueAxisLabel: boolean;
+  forceMerge: boolean;
+  categoryAxisScaleType: string;
+  valueAxisScaleType: string;
+  trimOrdinalDataOnOverflow: boolean;
+  forcedTickCount?: number;
+  forcedYDomain?: any[];
+  forcedXDomain?: any[];
+  ensureXDomain?: any;
+  ensureYDomain?: any;
+  categoryAxisDisplayUnits?: number;
+  categoryAxisPrecision?: number;
+  valueAxisDisplayUnits?: number;
+  valueAxisPrecision?: number;
 }
 
 export interface Line {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    tooltipInfo: VisualTooltipDataItem[];
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  tooltipInfo: VisualTooltipDataItem[];
 }
 
 export interface LinearStop {
-    completion: number;
-    color: string;
+  completion: number;
+  color: string;
 }
 
 export interface Milestone {
-    type: string;
-    category?: string;
-    start: Date;
-    tooltipInfo: VisualTooltipDataItem[];
+  type: string;
+  category?: string;
+  start: Date;
+  tooltipInfo: VisualTooltipDataItem[];
 }
 
-export interface MilestonePath extends Milestone {
-    taskID: number;
+export interface MilestonePath {
+  type: string;
+  start: Date;
+  taskID: number;
+  tooltipInfo: VisualTooltipDataItem[];
+  color?: string;
+  label?: string;
 }
 
 export interface MilestoneDataPoint {
-    name: string;
-    shapeType: string;
-    color: string;
-    identity: ISelectionId;
+  name: string;
+  shapeType: string;
+  color: string;
+  identity: ISelectionId;
 }
 
 export interface MilestoneData {
-    dataPoints: MilestoneDataPoint[];
+  dataPoints: MilestoneDataPoint[];
 }

@@ -37,6 +37,13 @@ export enum MilestoneShape {
   Square = "Square",
 }
 
+export enum MilestoneLabelPosition {
+  Right = "Right",
+  Left = "Left",
+  Top = "Top",
+  Bottom = "Bottom",
+}
+
 export enum ResourceLabelPosition {
   Top = "Top",
   Right = "Right",

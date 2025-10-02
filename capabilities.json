@@ -472,6 +472,39 @@
         }
       }
     },
+    "milestoneText": {
+      "displayName": "Milestone Text",
+      "properties": {
+        "show": {
+          "displayName": "Show",
+          "type": {
+            "bool": true
+          }
+        },
+        "displayName": {
+          "displayName": "Text",
+          "type": {
+            "text": true
+          }
+        },
+        "fill": {
+          "displayName": "Color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "fontSize": {
+          "displayName": "Text Size",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
     "taskLabels": {
       "properties": {
         "show": {

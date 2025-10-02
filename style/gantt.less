@@ -29,77 +29,84 @@
  * We compile it as a less file in order to wrap the external CSS rules.
  */
 
- @import (less) "../node_modules/powerbi-visuals-utils-interactivityutils/lib/index.css";
- @import (less) "../node_modules/powerbi-visuals-utils-chartutils/lib/index.css";
+@import (less)
+  "../node_modules/powerbi-visuals-utils-interactivityutils/lib/index.css";
+@import (less) "../node_modules/powerbi-visuals-utils-chartutils/lib/index.css";
 
 .visual {
-    .gantt-body {
-        overflow: auto;
-        position: absolute;
-    }
-    
-    .gantt {
-        position: absolute;
-        .axis {
-            path, line {
-                stroke: #000;
-            }
-    
-            path {
-                fill: none;
-                stroke-width: 1.5;
-            }
-    
-            line {
-                stroke-width: 1;
-            }
-    
-            font-size: 10px;
-        }
-    
-        .tasks {
-            .task {
-                .task-resource {
-                    font-size: medium;
-                    font-weight: bold;
-                    font-family: 'Roboto',-apple-system,BlinkMacSystemFont,sans-serif;
-                    letter-spacing: .22px;
-                }
-    
-                .task-progress {    
-                    opacity: 1;
-                }
-                .task-pseudo-gradient{
-                    opacity: .4;
-                    fill: white!important;
-                }
-            }
-        }
-    
-        .chart-line {
-            stroke-width: 2px;
-            stroke-dasharray: 3, 3;
-            stroke: #000;
-        }
-    
-        .task-labels {
-            width: 110px;
-        }
-    
-        .task-lines{
-            .label {
-                font-family: 'Roboto',-apple-system,BlinkMacSystemFont,sans-serif;
-                font-weight: 400;
-                letter-spacing: .22px;
-                
-                .parent{
-                    font-weight: 700;
-                }
+  .gantt-body {
+    overflow: auto;
+    position: absolute;
+  }
 
-                .child {
-                    font-style: oblique
-                }
-            }
-        }
+  .gantt {
+    position: absolute;
+    .axis {
+      path,
+      line {
+        stroke: #000;
+      }
+
+      path {
+        fill: none;
+        stroke-width: 1.5;
+      }
+
+      line {
+        stroke-width: 1;
+      }
+
+      font-size: 10px;
     }
+
+    .tasks {
+      .task {
+        .task-resource {
+          font-size: medium;
+          font-weight: bold;
+          font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+          letter-spacing: 0.22px;
+        }
+
+        .task-progress {
+          opacity: 1;
+        }
+        .task-pseudo-gradient {
+          opacity: 0.4;
+          fill: white !important;
+        }
+      }
+    }
+
+    .chart-line {
+      stroke-width: 2px;
+      stroke-dasharray: 3, 3;
+      stroke: #000;
+    }
+
+    .task-labels {
+      width: 110px;
+    }
+
+    .task-lines {
+      .label {
+        font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-weight: 400;
+        letter-spacing: 0.22px;
+
+        .parent {
+          font-weight: 700;
+        }
+
+        .child {
+          font-style: oblique;
+        }
+      }
+    }
+  }
+}
+
+text.milestone-legend {
+  user-select: none;
+  pointer-events: none;
 }

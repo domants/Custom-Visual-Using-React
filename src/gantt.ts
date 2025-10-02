@@ -3218,10 +3218,9 @@ export class Gantt implements IVisual {
         const updatedMilestones: MilestonePath[] = nestedByDate.map(
           (nestedObj) => {
             const oneDateMilestones = nestedObj.values;
-            // if there is 2 or more milestones for concrete date => draw only one milestone for concrete date, but with tooltip for all of them
             const currentMilestone = [...oneDateMilestones].pop();
             const allTooltipInfo = oneDateMilestones.map(
-              (milestone: MilestonePath) => milestone.tooltipInfo
+              (m: MilestonePath) => m.tooltipInfo
             );
             currentMilestone.tooltipInfo = allTooltipInfo.reduce(
               (a, b) => a.concat(b),
@@ -3233,6 +3232,8 @@ export class Gantt implements IVisual {
               start: currentMilestone.start,
               taskID: d.index,
               tooltipInfo: currentMilestone.tooltipInfo,
+              color: d.color, // legend color for this task
+              label: d.taskType || "", // legend label (series name)
             };
           }
         );
@@ -3286,9 +3287,84 @@ export class Gantt implements IVisual {
           transformForMilestone(data.taskID, data.start)
         )
         .attr("fill", (data: MilestonePath) =>
-          this.getMilestoneColor(data.type)
+          this.colorHelper.getHighContrastColor(
+            "foreground",
+            data.color || this.getMilestoneColor(data.type)
+          )
         );
     }
+
+    // constants for layout
+    const barH = Gantt.getBarHeight(taskConfigHeight);
+    const iconW = barH; // your shapes are roughly square by bar height
+    const textPad = Math.max(4, barH * 0.25);
+
+    // Label selection bound to the same data
+    const milestoneLabelsSel = taskMilestonesMerged
+      .selectAll("text.milestone-legend")
+      .data((milestonesData) => <MilestonePath[]>milestonesData.values);
+
+    const milestoneLabelsEnter = milestoneLabelsSel
+      .enter()
+      .append("text")
+      .classed("milestone-legend", true);
+
+    milestoneLabelsSel.exit().remove();
+
+    const milestoneLabelsMerged = milestoneLabelsEnter.merge(
+      <any>milestoneLabelsSel
+    );
+
+    if (this.hasNotNullableDates) {
+      milestoneLabelsMerged
+        .attr(
+          "x",
+          (data: MilestonePath) => Gantt.TimeScale(data.start) + iconW + textPad
+        )
+        .attr("y", (data: MilestonePath) => {
+          const yTop =
+            Gantt.getBarYCoordinate(data.taskID, taskConfigHeight) +
+            (data.taskID + 1) * this.getResourceLabelTopMargin();
+          // vertically center text on bar
+          const fontPt =
+            this.viewModel.settings.legendCardSettings.fontSize.value;
+          const fontPx = +PixelConverter.fromPoint(fontPt).replace("px", ""); // quick conversion
+          return yTop + barH / 2 + fontPx * 0.35;
+        })
+        .text((data: MilestonePath) => data.label || "")
+        .style(
+          "font-size",
+          PixelConverter.fromPoint(
+            this.viewModel.settings.legendCardSettings.fontSize.value
+          )
+        )
+        .style("fill", (data: MilestonePath) =>
+          this.colorHelper.getHighContrastColor(
+            "foreground",
+            data.color || this.getMilestoneColor(data.type)
+          )
+        )
+        .style("alignment-baseline", "middle")
+        .style("pointer-events", "none"); // let milestone icon receive hover for tooltip
+    }
+
+    milestoneLabelsMerged.each(function () {
+      AxisHelper.LabelLayoutStrategy.clip(
+        d3Select(this),
+        140, // TODO: adjust or compute dynamically
+        textMeasurementService.svgEllipsis
+      );
+    });
+
+    this.renderTooltip(taskMilestonesSelectionMerged);
+  }
+
+  /**
+   * Render days off rects
+   * @param taskSelection Task Selection
+        textMeasurementService.svgEllipsis
+      );
+    });
 
     this.renderTooltip(taskMilestonesSelectionMerged);
   }
