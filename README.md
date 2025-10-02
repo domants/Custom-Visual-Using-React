@@ -1,7 +1,3 @@
-Got it 👍 I’ve rewritten your documentation in clean, structured **Markdown** format for GitHub. I kept it concise but clear, added section headers, callouts, code blocks, and links for better readability. Here’s the improved version:
-
----
-
 # Build a Custom Power BI Visual with React
 
 Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
