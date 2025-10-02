@@ -1,3 +1,5 @@
+Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
+
 # powerbi-visuals-gantt
 [![Build Status](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml)
 
