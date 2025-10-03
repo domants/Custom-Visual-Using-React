@@ -1,3 +1,5 @@
+//ganttChartSettingsModels.ts
+
 import powerbiVisualsApi from "powerbi-visuals-api";
 import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
 import { legendInterfaces } from "powerbi-visuals-utils-chartutils";

@@ -1,4 +1,4 @@
-/*
+/*  columns.ts
  *  Power BI Visualizations
  *
  *  Copyright (c) Microsoft Corporation
@@ -39,73 +39,106 @@ import PrimitiveValue = powerbi.PrimitiveValue;
 import { valueFormatter as ValueFormatter } from "powerbi-visuals-utils-formattingutils";
 
 import { converterHelper } from "powerbi-visuals-utils-dataviewutils";
-import {GanttRole} from "./enums";
-
+import { GanttRole } from "./enums";
 
 const extraInformationRole = GanttRole.ExtraInformation;
 
 export class GanttColumns<T> {
+  public static getGroupedValueColumns(
+    dataView: DataView
+  ): GanttColumns<DataViewValueColumn>[] {
+    const categorical: DataViewCategorical = dataView?.categorical;
+    const values: DataViewValueColumns = categorical?.values;
+    const grouped: DataViewValueColumnGroup[] =
+      values?.length && values.grouped();
 
-    public static getGroupedValueColumns(dataView: DataView): GanttColumns<DataViewValueColumn>[] {
-        const categorical: DataViewCategorical = dataView?.categorical;
-        const values: DataViewValueColumns = categorical?.values;
-        const grouped: DataViewValueColumnGroup[] = values?.length && values.grouped();
-
-        if (values === undefined || values.length == 0) {
-            return;
-        }
-
-        return grouped && grouped.map(g => lodashMapValues(
-            new this<DataViewValueColumn>(),
-            (n, i) => g.values.filter(v => v.source.roles[i])[0]));
+    if (values === undefined || values.length == 0) {
+      return;
     }
 
-    public static getCategoricalValues(dataView: DataView): GanttColumns<any> {
-        const categorical: DataViewCategorical = dataView && dataView.categorical;
-        const categories: DataViewCategoricalColumn[] = categorical && categorical.categories || [];
-        const values: DataViewValueColumns = categorical && categorical.values || <DataViewValueColumns>[];
-        const series: PrimitiveValue[] = categorical && values.source && this.getSeriesValues(dataView);
+    return (
+      grouped &&
+      grouped.map((g) =>
+        lodashMapValues(
+          new this<DataViewValueColumn>(),
+          (n, i) => g.values.filter((v) => v.source.roles[i])[0]
+        )
+      )
+    );
+  }
 
-        return categorical && lodashMapValues(new this<any[]>(), (n, i) => {
-            let columns: PrimitiveValue[] | { [x: string]: PrimitiveValue[]; };
-            (<DataViewValueColumn[]>lodashToArray(categories))
-                .concat(lodashToArray(values))
-                .filter(x => x.source.roles && x.source.roles[i])
-                .forEach(x => {
-                    if (i === extraInformationRole && x.source.roles && x.source.roles[extraInformationRole]) {
-                        if (!columns) {
-                            columns = {};
-                        }
+  public static getCategoricalValues(dataView: DataView): GanttColumns<any> {
+    const categorical: DataViewCategorical = dataView && dataView.categorical;
+    const categories: DataViewCategoricalColumn[] =
+      (categorical && categorical.categories) || [];
+    const values: DataViewValueColumns =
+      (categorical && categorical.values) || <DataViewValueColumns>[];
+    const series: PrimitiveValue[] =
+      categorical && values.source && this.getSeriesValues(dataView);
 
-                        if (x.source.format) {
-                            const formatter = ValueFormatter.create({ format: x.source.format });
-                            columns[x.source.displayName] = x.values.map(v => formatter.format(v));
-                        } else {
-                            columns[x.source.displayName] = x.values;
-                        }
-                    } else {
-                        columns = x.values;
-                    }
+    return (
+      categorical &&
+      lodashMapValues(new this<any[]>(), (n, i) => {
+        let columns: PrimitiveValue[] | { [x: string]: PrimitiveValue[] };
+        (<DataViewValueColumn[]>lodashToArray(categories))
+          .concat(lodashToArray(values))
+          .filter((x) => x.source.roles && x.source.roles[i])
+          .forEach((x) => {
+            if (
+              i === extraInformationRole &&
+              x.source.roles &&
+              x.source.roles[extraInformationRole]
+            ) {
+              if (!columns) {
+                columns = {};
+              }
+
+              if (x.source.format) {
+                const formatter = ValueFormatter.create({
+                  format: x.source.format,
                 });
+                columns[x.source.displayName] = x.values.map((v) =>
+                  formatter.format(v)
+                );
+              } else {
+                columns[x.source.displayName] = x.values;
+              }
+            } else {
+              columns = x.values;
+            }
+          });
 
-            return columns || values.source && values.source.roles && values.source.roles[i] && series;
-        });
-    }
+        return (
+          columns ||
+          (values.source &&
+            values.source.roles &&
+            values.source.roles[i] &&
+            series)
+        );
+      })
+    );
+  }
 
-    public static getSeriesValues(dataView: DataView): PrimitiveValue[] {
-        return dataView && dataView.categorical && dataView.categorical.values
-            && dataView.categorical.values.map(x => converterHelper.getSeriesName(x.source));
-    }
+  public static getSeriesValues(dataView: DataView): PrimitiveValue[] {
+    return (
+      dataView &&
+      dataView.categorical &&
+      dataView.categorical.values &&
+      dataView.categorical.values.map((x) =>
+        converterHelper.getSeriesName(x.source)
+      )
+    );
+  }
 
-    // Data Roles
-    public Legend: T = null;
-    public Task: T = null;
-    public Parent: T = null;
-    public StartDate: T = null;
-    public EndDate: T = null;
-    public Duration: T = null;
-    public Completion: T = null;
-    public Resource: T = null;
-    public ExtraInformation: T = null;
-    public Milestones: T = null;
+  // Data Roles
+  public Legend: T = null;
+  public Task: T = null;
+  public Parent: T = null;
+  public StartDate: T = null;
+  public EndDate: T = null;
+  public Duration: T = null;
+  public Completion: T = null;
+  public Resource: T = null;
+  public ExtraInformation: T = null;
+  public Milestones: T = null;
 }

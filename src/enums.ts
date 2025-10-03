@@ -1,3 +1,4 @@
+//enums.ts
 export enum DateType {
   Second = "Second",
   Minute = "Minute",

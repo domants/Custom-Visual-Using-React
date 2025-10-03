@@ -1,4 +1,4 @@
-/*
+/*  behavior.ts
  *  Power BI Visualizations
  *
  *  Copyright (c) Microsoft Corporation

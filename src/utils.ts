@@ -1,3 +1,4 @@
+//utils.ts
 import { getRandomNumber } from "powerbi-visuals-utils-testutils";
 import lodashRange from "lodash.range";
 
