@@ -331,9 +331,15 @@ export class MilestonesCardSettings extends Card {
     value: shapesOptions[0],
   });
 
+  showLabels = new formattingSettings.ToggleSwitch({
+    name: "showLabels",
+    displayNameKey: "Visual_Milestone_ShowLabels",
+    value: true,
+  });
+
   name: string = "milestones";
   displayNameKey: string = "Visual_Milestones";
-  slices = [];
+  slices = [this.showLabels]; // <- make it the default slice
 }
 
 export class TaskLabelsCardSettings extends Card {
@@ -565,11 +571,15 @@ export class GanttChartSettingsModel extends Model {
   populateMilestones(milestonesWithoutDuplicates: {
     [name: string]: MilestoneDataPoint;
   }) {
-    const newSlices = [];
+    // Make sure the toggle is always present in the card
+    const newSlices: FormattingSettingsSlice[] = [
+      this.milestonesCardSettings.showLabels,
+    ];
 
     if (milestonesWithoutDuplicates) {
       for (const uniqMilestones in milestonesWithoutDuplicates) {
         const milestone = milestonesWithoutDuplicates[uniqMilestones];
+
         newSlices.push(
           new formattingSettings.ColorPicker({
             name: this.milestonesCardSettings.fill.name,

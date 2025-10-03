@@ -469,6 +469,9 @@
           "type": {
             "text": true
           }
+        },
+        "showLabels": {
+          "type": { "bool": true }
         }
       }
     },

@@ -3299,73 +3299,71 @@ export class Gantt implements IVisual {
     const iconW = barH; // your shapes are roughly square by bar height
     const textPad = Math.max(4, barH * 0.25);
 
-    // Label selection bound to the same data
-    const milestoneLabelsSel = taskMilestonesMerged
-      .selectAll("text.milestone-legend")
-      .data((milestonesData) => <MilestonePath[]>milestonesData.values);
+    const showLabels =
+      this.viewModel.settings.milestonesCardSettings.showLabels.value;
 
-    const milestoneLabelsEnter = milestoneLabelsSel
-      .enter()
-      .append("text")
-      .classed("milestone-legend", true);
+    // Remove any previous labels if feature is OFF
+    if (!showLabels) {
+      taskMilestonesMerged.selectAll("text.milestone-legend").remove();
+    } else {
+      // Label selection bound to the same data
+      const milestoneLabelsSel = taskMilestonesMerged
+        .selectAll("text.milestone-legend")
+        .data((milestonesData) => <MilestonePath[]>milestonesData.values);
 
-    milestoneLabelsSel.exit().remove();
+      const milestoneLabelsEnter = milestoneLabelsSel
+        .enter()
+        .append("text")
+        .classed("milestone-legend", true);
 
-    const milestoneLabelsMerged = milestoneLabelsEnter.merge(
-      <any>milestoneLabelsSel
-    );
+      milestoneLabelsSel.exit().remove();
 
-    if (this.hasNotNullableDates) {
-      milestoneLabelsMerged
-        .attr(
-          "x",
-          (data: MilestonePath) => Gantt.TimeScale(data.start) + iconW + textPad
-        )
-        .attr("y", (data: MilestonePath) => {
-          const yTop =
-            Gantt.getBarYCoordinate(data.taskID, taskConfigHeight) +
-            (data.taskID + 1) * this.getResourceLabelTopMargin();
-          // vertically center text on bar
-          const fontPt =
-            this.viewModel.settings.legendCardSettings.fontSize.value;
-          const fontPx = +PixelConverter.fromPoint(fontPt).replace("px", ""); // quick conversion
-          return yTop + barH / 2 + fontPx * 0.35;
-        })
-        .text((data: MilestonePath) => data.label || "")
-        .style(
-          "font-size",
-          PixelConverter.fromPoint(
-            this.viewModel.settings.legendCardSettings.fontSize.value
+      const milestoneLabelsMerged = milestoneLabelsEnter.merge(
+        <any>milestoneLabelsSel
+      );
+
+      if (this.hasNotNullableDates) {
+        milestoneLabelsMerged
+          .attr(
+            "x",
+            (data: MilestonePath) =>
+              Gantt.TimeScale(data.start) + iconW + textPad
           )
-        )
-        .style("fill", (data: MilestonePath) =>
-          this.colorHelper.getHighContrastColor(
-            "foreground",
-            data.color || this.getMilestoneColor(data.type)
+          .attr("y", (data: MilestonePath) => {
+            const yTop =
+              Gantt.getBarYCoordinate(data.taskID, taskConfigHeight) +
+              (data.taskID + 1) * this.getResourceLabelTopMargin();
+            // vertically center text on bar
+            const fontPt =
+              this.viewModel.settings.legendCardSettings.fontSize.value;
+            const fontPx = +PixelConverter.fromPoint(fontPt).replace("px", ""); // quick conversion
+            return yTop + barH / 2 + fontPx * 0.35;
+          })
+          .text((data: MilestonePath) => data.label || "")
+          .style(
+            "font-size",
+            PixelConverter.fromPoint(
+              this.viewModel.settings.legendCardSettings.fontSize.value
+            )
           )
-        )
-        .style("alignment-baseline", "middle")
-        .style("pointer-events", "none"); // let milestone icon receive hover for tooltip
+          .style("fill", (data: MilestonePath) =>
+            this.colorHelper.getHighContrastColor(
+              "foreground",
+              data.color || this.getMilestoneColor(data.type)
+            )
+          )
+          .style("alignment-baseline", "middle")
+          .style("pointer-events", "none"); // let milestone icon receive hover for tooltip
+      }
+
+      milestoneLabelsMerged.each(function () {
+        AxisHelper.LabelLayoutStrategy.clip(
+          d3Select(this),
+          140, // TODO: adjust or compute dynamically
+          textMeasurementService.svgEllipsis
+        );
+      });
     }
-
-    milestoneLabelsMerged.each(function () {
-      AxisHelper.LabelLayoutStrategy.clip(
-        d3Select(this),
-        140, // TODO: adjust or compute dynamically
-        textMeasurementService.svgEllipsis
-      );
-    });
-
-    this.renderTooltip(taskMilestonesSelectionMerged);
-  }
-
-  /**
-   * Render days off rects
-   * @param taskSelection Task Selection
-        textMeasurementService.svgEllipsis
-      );
-    });
-
     this.renderTooltip(taskMilestonesSelectionMerged);
   }
 
@@ -4143,6 +4141,7 @@ export class Gantt implements IVisual {
 
   public filterSettingsCards() {
     const settings: GanttChartSettingsModel = this.formattingSettings;
+    const dataPoints = this.viewModel?.milestonesData.dataPoints;
 
     settings.cards.forEach((element) => {
       switch (element.name) {
@@ -4152,20 +4151,24 @@ export class Gantt implements IVisual {
             !this.viewModel.isDurationFilled &&
             !this.viewModel.isEndDateFilled
           ) {
-            return;
+            // still allow user to see the milestones card (for the showLabels toggle)
+            // even if neither Duration nor EndDate is bound
           }
 
-          const dataPoints: MilestoneDataPoint[] =
-            this.viewModel && this.viewModel.milestonesData.dataPoints;
-          if (!dataPoints || !dataPoints.length) {
-            settings.milestonesCardSettings.visible = false;
-            return;
+          const mPoints: MilestoneDataPoint[] =
+            this.viewModel && this.viewModel.milestonesData?.dataPoints;
+
+          if (!mPoints || !mPoints.length) {
+            // Keep the card visible and show only the toggle when there are no per-type slices
+            settings.milestonesCardSettings.visible = true;
+            settings.milestonesCardSettings.slices = [
+              settings.milestonesCardSettings.showLabels,
+            ];
+            break;
           }
 
-          const milestonesWithoutDuplicates =
-            Gantt.getUniqueMilestones(dataPoints);
-
-          settings.populateMilestones(milestonesWithoutDuplicates);
+          const uniq = Gantt.getUniqueMilestones(mPoints);
+          settings.populateMilestones(uniq); // this will keep showLabels as the first slice
           break;
         }
 
