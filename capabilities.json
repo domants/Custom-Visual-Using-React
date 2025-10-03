@@ -471,6 +471,7 @@
           }
         },
         "showLabels": {
+          "displayNameKey": "Visual_Milestone_ShowLabels",
           "type": { "bool": true }
         }
       }
