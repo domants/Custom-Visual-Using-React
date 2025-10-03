@@ -15,7 +15,7 @@ cd powerbi-visuals-gantt
 
 [PowerBI-Visuals-AppSource](https://github.com/DataChant/PowerBI-Visuals-AppSource/tree/main)
 
-*This is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
+*Link is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
 
 ---
 
