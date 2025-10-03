@@ -1,90 +1,129 @@
-Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
+# Build a Custom Power BI Visual with React
 
+Below is the GitHub repository I'm using as a reference for this repo. Thanks to those guys who participated on this build.
 
-------
-Clone repo and install the PowerBI Visual Tools (pbiviz) package:
+**Reference**: *[powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)*
+
+Copy below if you want to clone the Repo
+
+```bash
+git clone https://github.com/microsoft/powerbi-visuals-gantt.git
+cd powerbi-visuals-gantt
 ```
-npm i -g powerbi-visuals-tools
-```
 
-------
-# powerbi-visuals-gantt
+### You can also see the link below for the single source of truth for all of the Power BI Custom Visuals
+
+[PowerBI-Visuals-AppSource](https://github.com/DataChant/PowerBI-Visuals-AppSource/tree/main)
+
+*The link above is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
+
+---
+
+## 🚀 Getting Started
+
+**Development Setup**
+
+Follow Microsoft's official setup and prerequisites guide:
+👉 [Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
+
+---
+
+## 📊 About the Gantt Visual
+
 [![Build Status](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml)
 
-> A Gantt chart is a type of bar chart which illustrates a project timeline or schedule. The Gantt Chart visual shows the Tasks, Start Dates, Durations, % Complete, and Resources for a project. The Gantt Chart visual can be used to show current schedule status using percent-complete shadings and a vertical "TODAY" line. The Legend may be used to group or filter tasks based upon data values.
+A **Gantt chart** is a bar chart that illustrates a project timeline or schedule.
+
+This custom visual supports:
+
+* Tasks, Start Dates, Durations, % Complete, Resources, Milestone Icon with legend next to it
+* Percent-complete shading
+* Vertical "TODAY" line
+* Legend-based grouping/filtering
 
 ![Gantt chart screenshot](assets/screenshot.png)
 
-# Overview
+See also: [Microsoft AppSource Gantt Chart](https://store.office.com/en-us/app.aspx?assetid=WA104380765)
 
-Gantt chart is a type of bar chart to illustrate a schedule with time axis. When you put Gantt chart along with other insightful charts in an interactive canvas, you can manage your project in whole new way. In Power BI as visuals interact with each other, you can look at your resource allocation, task completion, remaining tasks in different perspective and get a firm handle on the future.
-Gantt charts are indispensable part of project management portfolio. Project Managers and executives love Gantt charts, since they visually show in a very effective at-a-glance way, the overall time line of the project, the current status & progress (or lack thereof) along with the assignment at considerable details.
-With this custom visual, you can specify the Tasks, Start Date, Duration and %Completion for rendering them as Gantt. Please note that the %Completion expects a decimal value ( for example 0.85 means 85%) and Start Date , a date field and not a date hierarchy.
-You can also control the color of the bar with a Legend. You can use any relevant field from your project as Legend for example task type for this purpose. Additionally, you can also specify the resource field, which would be listed next the bar in the Gantt.
+---
 
-See also [Gantt chart at Microsoft Office store](https://store.office.com/en-us/app.aspx?assetid=WA104380765&sourcecorrid=968c5e90-8711-48fe-b9b4-a15ad9fe8dc4&searchapppos=0&ui=en-US&rs=en-US&ad=US&appredirect=false)
+### Add Developer Certificate
 
+Run in **CMD**:
 
-# Develop-Custom-Visual-Using-React
----------
-Follow the setups from microsofts documentations:
-*https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop*
----------
-### Command to add certificate: open CMD and run below command:
-```
+```bash
 pbiviz install-cert
 ```
-<img width="1104" height="175" alt="image" src="https://github.com/user-attachments/assets/36c6f3c3-97ec-4703-abde-6bddb7387345" />
+<img width="597" height="244" alt="image" src="https://github.com/user-attachments/assets/b0c93803-834e-46e2-8e50-2ed881124059" />
 
 
 
+If you encounter the `pwsh is not recognized` error:
 
----------
-Note: When you add Certicate and run to an error see below:
-https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core
-
-run this command in your cmd:
-```
+```bash
 dotnet tool update --global PowerShell
 ```
-<img width="1114" height="627" alt="image" src="https://github.com/user-attachments/assets/c225d76f-4528-4339-8aaf-a013eb99985b" />
 
+More details: [Fixing pwsh issue](https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core)
 
+---
 
----------
-install the PowerBI Visual Tools (pbiviz) package.
-```
+## ⚙️ Developer Mode
+
+Enable developer mode in Power BI Service:
+[Power BI Developer Settings](https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi)
+
+> ⚠️ Note: Developer mode works only in **Power BI Service** (not Desktop app).
+
+---
+
+### Install Power BI Visual Tools (pbiviz)
+
+```bash
 npm i -g powerbi-visuals-tools
 ```
 
----------
+## 📦 Install Dependencies (D3.js)
 
-Enable Developer mode is working only in Web Service:
-https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi
-<img width="892" height="615" alt="image" src="https://github.com/user-attachments/assets/2e69cafd-da37-42e0-914e-921034fd329c" />
+Make sure required packages are installed:
 
-
----------
-# Enhancing with D3.js
-
-On reactCircleCard app, expand the node_modules folder to check the packages d3, @type/d3, core-js, and powerbi-visuals-api are installed. If you can’t find any of these, just run the npm install for all the missing packages:
-```
+```bash
 npm install d3 @types/d3 core-js powerbi-visuals-api
 ```
-<img width="782" height="257" alt="image" src="https://github.com/user-attachments/assets/cb997ace-f47f-4427-81d0-e8ba76041474" />
 
+Check under `node_modules`. -> d3 folder
+If any are missing, rerun `npm install d3 @types/d3 core-js powerbi-visuals-api`.
 
-We've got all we need now to start developing our first visual using D3.js.
+---
 
----------
-Now proceed and Create a development project by following the link below from MSFT:
-https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual
+## 📈 Create a React Custom Visual
 
+Follow the Microsoft guide:
+👉 [Create a React Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual)
 
----------
-When testing the visual and don't see any changes go to below link and authorize your browser:
-```
+---
+
+## 🔍 Debugging & Testing
+
+If your changes don’t show up, authorize browser access:
+
+```url
 https://localhost:8080/assets
 ```
 
+---
 
+### Package your Power BI visual. Follow the link below:
+*[Package PBI Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/package-visual)*
+
+
+---
+
+## 📚 Summary
+
+* **pbiviz** is the main tool for Power BI visuals.
+* Use **D3.js + React** to build interactive visuals.
+* Enable developer mode in **Power BI Service** for live testing.
+* Troubleshoot with certificate setup and dependency checks.
+
+---
