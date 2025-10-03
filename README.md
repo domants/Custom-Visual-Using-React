@@ -1,25 +1,24 @@
 # Build a Custom Power BI Visual with React
 
-Below is the GitHub repository I'm using as a reference for this repo.
+Below is the GitHub repository I'm using as a reference for this repo. Thanks to those guys who participated on this build.
 
-Reference: [powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)
+**Reference**: *[powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)*
 
----
-
-## 🚀 Getting Started
-
-### Install Power BI Visual Tools (pbiviz)
-
-```bash
-npm i -g powerbi-visuals-tools
-```
-
-### Clone the Repo
+Copy below if you want to clone the Repo
 
 ```bash
 git clone https://github.com/microsoft/powerbi-visuals-gantt.git
 cd powerbi-visuals-gantt
 ```
+
+---
+
+## 🚀 Getting Started
+
+**Development Setup**
+
+Follow Microsoft's official setup and prerequisites guide:
+👉 [Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
 
 ---
 
@@ -31,7 +30,7 @@ A **Gantt chart** is a bar chart that illustrates a project timeline or schedule
 
 This custom visual supports:
 
-* Tasks, Start Dates, Durations, % Complete, Resources
+* Tasks, Start Dates, Durations, % Complete, Resources, Milestone Icon with legend next to it
 * Percent-complete shading
 * Vertical "TODAY" line
 * Legend-based grouping/filtering
@@ -41,11 +40,6 @@ This custom visual supports:
 See also: [Microsoft AppSource Gantt Chart](https://store.office.com/en-us/app.aspx?assetid=WA104380765)
 
 ---
-
-## 🛠️ Development Setup
-
-Follow Microsoft’s official setup guide:
-👉 [Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
 
 ### Add Developer Certificate
 
@@ -77,7 +71,13 @@ Enable developer mode in Power BI Service:
 
 ---
 
-## 📦 Install Dependencies
+### Install Power BI Visual Tools (pbiviz)
+
+```bash
+npm i -g powerbi-visuals-tools
+```
+
+## 📦 Install Dependencies (D3.js)
 
 Make sure required packages are installed:
 
@@ -85,8 +85,8 @@ Make sure required packages are installed:
 npm install d3 @types/d3 core-js powerbi-visuals-api
 ```
 
-Check them under `node_modules`.
-If any are missing, rerun `npm install`.
+Check under `node_modules`. -> d3 folder
+If any are missing, rerun `npm install d3 @types/d3 core-js powerbi-visuals-api`.
 
 ---
 
