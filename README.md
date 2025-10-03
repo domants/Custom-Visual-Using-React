@@ -11,6 +11,12 @@ git clone https://github.com/microsoft/powerbi-visuals-gantt.git
 cd powerbi-visuals-gantt
 ```
 
+### You can also see the link below for the single source of truth for all of the Power BI Custom Visuals
+
+[PowerBI-Visuals-AppSource](https://github.com/DataChant/PowerBI-Visuals-AppSource/tree/main)
+
+*This is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
+
 ---
 
 ## 🚀 Getting Started
