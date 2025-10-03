@@ -107,6 +107,12 @@ https://localhost:8080/assets
 
 ---
 
+### Package your Power BI visual. Follow the link below:
+*[Package PBI Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/package-visual)*
+
+
+---
+
 ## 📚 Summary
 
 * **pbiviz** is the main tool for Power BI visuals.
