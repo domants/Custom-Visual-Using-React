@@ -1586,6 +1586,42 @@ export class Gantt implements IVisual {
     } else {
       addedParents.push(taskParentName);
 
+      // const parentTask: Task = {
+      //   index: 0,
+      //   name: taskParentName,
+      //   start: null,
+      //   duration: null,
+      //   completion: null,
+      //   resource: null,
+      //   end: null,
+      //   parent: null,
+      //   children: [task],
+      //   visibility: true,
+      //   taskType: null,
+      //   description: null,
+      //   color: null,
+      //   tooltipInfo: null,
+      //   extraInformation: collapsedTasks.includes(taskParentName)
+      //     ? extraInformation
+      //     : null,
+      //   daysOffList: null,
+      //   wasDowngradeDurationUnit: null,
+      //   selected: null,
+      //   identity: selectionBuilder.createSelectionId(),
+      //   Milestones:
+      //     milestone && startDate
+      //       ? [
+      //           {
+      //             type: milestone,
+      //             start: startDate,
+      //             tooltipInfo: null,
+      //             category: categoryValue as string,
+      //           },
+      //         ]
+      //       : [],
+      //   highlight: highlight !== null,
+      // };
+
       const parentTask: Task = {
         index: 0,
         name: taskParentName,
@@ -1608,17 +1644,10 @@ export class Gantt implements IVisual {
         wasDowngradeDurationUnit: null,
         selected: null,
         identity: selectionBuilder.createSelectionId(),
-        Milestones:
-          milestone && startDate
-            ? [
-                {
-                  type: milestone,
-                  start: startDate,
-                  tooltipInfo: null,
-                  category: categoryValue as string,
-                },
-              ]
-            : [],
+
+        // don't assign child's milestone to the parent
+        Milestones: [],
+
         highlight: highlight !== null,
       };
 
