@@ -412,9 +412,93 @@ export class TooltipConfigCardSettings extends Card {
     value: "",
   });
 
-  name: string = "tooltipConfig";
-  displayNameKey: string = "Visual_TooltipSettings";
-  slices = [this.dateFormat];
+  // Use the formatting model’s dropdown/toggle components you actually import (see next issue)
+  mode = new formattingSettings.ItemDropdown({
+    name: "mode",
+    displayNameKey: "Tooltip_Mode",
+    items: [
+      { value: "all", displayName: "All" },
+      { value: "dates-only", displayName: "Dates only" },
+      { value: "off", displayName: "Off" },
+    ],
+    value: { value: "all", displayName: "All" },
+  });
+
+  showLegend = new formattingSettings.ToggleSwitch({
+    name: "showLegend",
+    displayNameKey: "Tooltip_Show_Legend",
+    value: true,
+  });
+  showTaskName = new formattingSettings.ToggleSwitch({
+    name: "showTaskName",
+    displayNameKey: "Tooltip_Show_Task",
+    value: true,
+  });
+  showStart = new formattingSettings.ToggleSwitch({
+    name: "showStart",
+    displayNameKey: "Tooltip_Show_StartDate",
+    value: true,
+  });
+  showEnd = new formattingSettings.ToggleSwitch({
+    name: "showEnd",
+    displayNameKey: "Tooltip_Show_EndDate",
+    value: true,
+  });
+  showDuration = new formattingSettings.ToggleSwitch({
+    name: "showDuration",
+    displayNameKey: "Tooltip_Show_Duration",
+    value: true,
+  });
+  showCompletion = new formattingSettings.ToggleSwitch({
+    name: "showCompletion",
+    displayNameKey: "Tooltip_Show_Completion",
+    value: true,
+  });
+  showResource = new formattingSettings.ToggleSwitch({
+    name: "showResource",
+    displayNameKey: "Tooltip_Show_Resource",
+    value: true,
+  });
+  showExtraInfo = new formattingSettings.ToggleSwitch({
+    name: "showExtraInfo",
+    displayNameKey: "Tooltip_Show_Extra",
+    value: true,
+  });
+
+  showMilestoneType = new formattingSettings.ToggleSwitch({
+    name: "showMilestoneType",
+    displayNameKey: "Tooltip_Show_MilestoneType",
+    value: true,
+  });
+  showMilestoneName = new formattingSettings.ToggleSwitch({
+    name: "showMilestoneName",
+    displayNameKey: "Tooltip_Show_MilestoneName",
+    value: true,
+  });
+  showMilestoneDate = new formattingSettings.ToggleSwitch({
+    name: "showMilestoneDate",
+    displayNameKey: "Tooltip_Show_MilestoneDate",
+    value: true,
+  });
+
+  name = "tooltipConfig";
+  displayNameKey = "Tooltip_Card_Title";
+
+  slices = [
+    this.mode,
+    this.dateFormat,
+    this.showLegend,
+    this.showTaskName,
+    this.showStart,
+    this.showEnd,
+    this.showDuration,
+    this.showCompletion,
+    this.showResource,
+    this.showExtraInfo,
+    this.showMilestoneType,
+    this.showMilestoneName,
+    this.showMilestoneDate,
+  ];
 }
 
 export class TaskConfigCardSettings extends Card {

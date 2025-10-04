@@ -554,11 +554,66 @@
       }
     },
     "tooltipConfig": {
+      "displayNameKey": "Tooltip_Settings",
       "properties": {
-        "dateFormat": {
+        "mode": {
+          "displayNameKey": "Tooltip_Mode",
           "type": {
-            "text": true
+            "enumeration": [
+              { "value": "all" },
+              { "value": "dates-only" },
+              { "value": "off" }
+            ]
           }
+        },
+        "dateFormat": {
+          "displayNameKey": "Tooltip_DateFormat",
+          "type": { "text": true }
+        },
+        "showLegend": {
+          "displayNameKey": "Tooltip_ShowLegend",
+          "type": { "bool": true }
+        },
+        "showTaskName": {
+          "displayNameKey": "Tooltip_ShowTaskName",
+          "type": { "bool": true }
+        },
+        "showStart": {
+          "displayNameKey": "Tooltip_ShowStart",
+          "type": { "bool": true }
+        },
+        "showEnd": {
+          "displayNameKey": "Tooltip_ShowEnd",
+          "type": { "bool": true }
+        },
+        "showDuration": {
+          "displayNameKey": "Tooltip_ShowDuration",
+          "type": { "bool": true }
+        },
+        "showCompletion": {
+          "displayNameKey": "Tooltip_ShowCompletion",
+          "type": { "bool": true }
+        },
+        "showResource": {
+          "displayNameKey": "Tooltip_ShowResource",
+          "type": { "bool": true }
+        },
+        "showExtraInfo": {
+          "displayNameKey": "Tooltip_ShowExtraInfo",
+          "type": { "bool": true }
+        },
+
+        "showMilestoneType": {
+          "displayNameKey": "Tooltip_ShowMilestoneType",
+          "type": { "bool": true }
+        },
+        "showMilestoneName": {
+          "displayNameKey": "Tooltip_ShowMilestoneName",
+          "type": { "bool": true }
+        },
+        "showMilestoneDate": {
+          "displayNameKey": "Tooltip_ShowMilestoneDate",
+          "type": { "bool": true }
         }
       }
     },

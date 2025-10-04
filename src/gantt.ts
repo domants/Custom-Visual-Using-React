@@ -388,7 +388,7 @@ export class Gantt implements IVisual {
   private formattingSettingsService: FormattingSettingsService;
 
   private hasHighlights: boolean;
-
+  private hasTooltipFields: boolean = false; // flag for displaying default tooltips
   private margin: IMargin = Gantt.DefaultMargin;
 
   private body: Selection<any>;
@@ -612,99 +612,123 @@ export class Gantt implements IVisual {
    * @param isEndDateFilled if end date is filled
    * @param roleLegendText customized legend name
    */
+
+  private static formatTooltipValue(v: any, fmt: GanttChartFormatters): string {
+    if (v instanceof Date && !isNaN(v.getTime()))
+      return fmt.startDateFormatter.format(v);
+    if (typeof v === "number") return v.toString();
+    if (typeof v === "string") {
+      const asDate = new Date(v);
+      return !isNaN(asDate.getTime())
+        ? fmt.startDateFormatter.format(asDate)
+        : v;
+    }
+    return v != null ? String(v) : "";
+  }
+
   public static getTooltipInfo(
     task: Task,
-    formatters: GanttChartFormatters,
+    fmt: GanttChartFormatters,
     durationUnit: DurationUnit,
-    localizationManager: ILocalizationManager,
+    loc: ILocalizationManager,
     isEndDateFilled: boolean,
-    roleLegendText?: string
+    roleLegendText?: string,
+    tt = {
+      // NEW defaulted bag
+      showLegend: true,
+      showTaskName: true,
+      showStart: true,
+      showEnd: true,
+      showDuration: true,
+      showCompletion: true,
+      showResource: true,
+      showExtraInfo: true,
+    }
   ): VisualTooltipDataItem[] {
-    const tooltipDataArray: VisualTooltipDataItem[] = [];
-    if (task.taskType) {
-      tooltipDataArray.push({
-        displayName:
-          roleLegendText || localizationManager.getDisplayName("Role_Legend"),
+    const tips: VisualTooltipDataItem[] = [];
+
+    if (tt.showLegend && task.taskType) {
+      tips.push({
+        displayName: roleLegendText || loc.getDisplayName("Role_Legend"),
         value: task.taskType,
       });
     }
 
-    tooltipDataArray.push({
-      displayName: localizationManager.getDisplayName("Role_Task"),
-      value: task.name,
-    });
+    if (tt.showTaskName) {
+      tips.push({
+        displayName: loc.getDisplayName("Role_Task"),
+        value: task.name,
+      });
+    }
 
-    if (task.start && !isNaN(task.start.getDate())) {
-      tooltipDataArray.push({
-        displayName: localizationManager.getDisplayName("Role_StartDate"),
-        value: formatters.startDateFormatter.format(task.start),
+    if (tt.showStart && task.start && !isNaN(task.start.getTime())) {
+      tips.push({
+        displayName: loc.getDisplayName("Role_StartDate"),
+        value: fmt.startDateFormatter.format(task.start),
       });
     }
 
     if (
-      lodashIsEmpty(task.Milestones) &&
+      tt.showEnd &&
+      (!task.Milestones || task.Milestones.length === 0) &&
       task.end &&
-      !isNaN(task.end.getDate())
+      !isNaN(task.end.getTime())
     ) {
-      tooltipDataArray.push({
-        displayName: localizationManager.getDisplayName("Role_EndDate"),
-        value: formatters.startDateFormatter.format(task.end),
+      tips.push({
+        displayName: loc.getDisplayName("Role_EndDate"),
+        value: fmt.startDateFormatter.format(task.end),
       });
     }
 
-    if (lodashIsEmpty(task.Milestones) && task.duration && !isEndDateFilled) {
-      const durationLabel: string = DurationHelper.generateLabelForDuration(
+    if (
+      tt.showDuration &&
+      (!task.Milestones || task.Milestones.length === 0) &&
+      task.duration != null &&
+      !isEndDateFilled
+    ) {
+      const label = DurationHelper.generateLabelForDuration(
         task.duration,
         durationUnit,
-        localizationManager
+        loc
       );
-      tooltipDataArray.push({
-        displayName: localizationManager.getDisplayName("Role_Duration"),
-        value: durationLabel,
+      tips.push({
+        displayName: loc.getDisplayName("Role_Duration"),
+        value: label,
       });
     }
 
-    if (task.completion) {
-      tooltipDataArray.push({
-        displayName: localizationManager.getDisplayName("Role_Completion"),
-        value: formatters.completionFormatter.format(task.completion),
+    if (tt.showCompletion && task.completion != null) {
+      tips.push({
+        displayName: loc.getDisplayName("Role_Completion"),
+        value: fmt.completionFormatter.format(task.completion),
       });
     }
 
-    if (task.resource) {
-      tooltipDataArray.push({
-        displayName: localizationManager.getDisplayName("Role_Resource"),
+    if (tt.showResource && task.resource) {
+      tips.push({
+        displayName: loc.getDisplayName("Role_Resource"),
         value: task.resource,
       });
     }
 
-    if (task.tooltipInfo && task.tooltipInfo.length) {
-      tooltipDataArray.push(...task.tooltipInfo);
+    if (tt.showExtraInfo && Array.isArray(task.extraInformation)) {
+      for (const e of task.extraInformation) {
+        tips.push({
+          displayName: e?.displayName ?? "",
+          value: Gantt.formatTooltipValue(e?.value, fmt),
+        });
+      }
     }
 
-    task.extraInformation
-      .map((tooltip) => {
-        if (typeof tooltip.value === "string") {
-          return tooltip;
-        }
+    if (Array.isArray(task.tooltipInfo) && task.tooltipInfo.length) {
+      tips.push(...task.tooltipInfo);
+    }
 
-        const value: any = tooltip.value;
-
-        if (isNaN(Date.parse(value)) || typeof value === "number") {
-          tooltip.value = value.toString();
-        } else {
-          tooltip.value = formatters.startDateFormatter.format(value);
-        }
-
-        return tooltip;
-      })
-      .forEach((tooltip) => tooltipDataArray.push(tooltip));
-
-    tooltipDataArray
-      .filter((x) => x.value && typeof x.value !== "string")
-      .forEach((tooltip) => (tooltip.value = tooltip.value.toString()));
-
-    return tooltipDataArray;
+    for (const t of tips) {
+      if (t.value != null && typeof t.value !== "string")
+        t.value = String(t.value);
+    }
+    return tips;
   }
 
   /**
@@ -750,7 +774,7 @@ export class Gantt implements IVisual {
       dateFormat = null;
     }
 
-    if (!settings.tooltipConfigCardSettings.dateFormat) {
+    if (!settings.tooltipConfigCardSettings.dateFormat.value) {
       settings.tooltipConfigCardSettings.dateFormat.value = dateFormat;
     }
 
@@ -818,6 +842,17 @@ export class Gantt implements IVisual {
     );
 
     return legendData;
+  }
+
+  private static filterOnlyStartEnd(
+    tips: VisualTooltipDataItem[],
+    loc: ILocalizationManager
+  ): VisualTooltipDataItem[] {
+    const startLabel = loc.getDisplayName("Role_StartDate");
+    const endLabel = loc.getDisplayName("Role_EndDate");
+    return (tips || []).filter(
+      (t) => t?.displayName === startLabel || t?.displayName === endLabel
+    );
   }
 
   private static getSortingOptions(dataView: DataView): SortingOptions {
@@ -1108,9 +1143,8 @@ export class Gantt implements IVisual {
     );
 
     // fill tooltips (for collapsed groups too)
-    this.addTooltipInfoForCollapsedTasks(
+    this.addTooltipInfoForTasks(
       tasks,
-      collapsedTasks,
       formatters,
       durationUnit,
       localizationManager,
@@ -1205,43 +1239,145 @@ export class Gantt implements IVisual {
     });
   }
 
-  private static addTooltipInfoForCollapsedTasks(
+  private static addTooltipInfoForTasks(
     tasks: Task[],
-    collapsedTasks: string[],
     formatters: GanttChartFormatters,
     durationUnit: DurationUnit,
-    localizationManager: powerbi.extensibility.ILocalizationManager,
+    loc: ILocalizationManager,
     isEndDateFilled: boolean,
     settings: GanttChartSettingsModel
-  ) {
-    tasks.forEach((task: Task) => {
-      if (!task.children || collapsedTasks.includes(task.name)) {
-        task.tooltipInfo = Gantt.getTooltipInfo(
-          task,
-          formatters,
-          durationUnit,
-          localizationManager,
-          isEndDateFilled,
-          settings.legendCardSettings.titleText.value
-        );
-        if (task.Milestones) {
-          task.Milestones.forEach((milestone) => {
-            const dateFormatted = formatters.startDateFormatter.format(
-              task.start
-            );
-            const dateTypesSettings = settings.dateTypeCardSettings;
-            milestone.tooltipInfo = Gantt.getTooltipForMilestoneLine(
-              dateFormatted,
-              localizationManager,
-              dateTypesSettings,
-              [milestone.type],
-              [milestone.category]
-            );
+  ): void {
+    if (!Array.isArray(tasks) || !formatters) return;
+
+    const tt = settings.tooltipConfigCardSettings;
+    const mode = (tt.mode?.value?.value as string) || "all";
+
+    const legendTitle =
+      settings?.legendCardSettings?.titleText?.value || undefined;
+    //const dateTypesSettings = settings?.dateTypeCardSettings;
+
+    for (const task of tasks) {
+      // Build base tips per toggles
+      let tips = Gantt.getTooltipInfo(
+        task,
+        formatters,
+        durationUnit,
+        loc,
+        isEndDateFilled,
+        legendTitle,
+        {
+          showLegend: !!tt.showLegend.value,
+          showTaskName: !!tt.showTaskName.value,
+          showStart: !!tt.showStart.value,
+          showEnd: !!tt.showEnd.value,
+          showDuration: !!tt.showDuration.value,
+          showCompletion: !!tt.showCompletion.value,
+          showResource: !!tt.showResource.value,
+          showExtraInfo: !!tt.showExtraInfo.value,
+        }
+      );
+
+      // Mode filter
+      if (mode === "dates-only") {
+        tips = Gantt.filterOnlyStartEnd(tips, loc);
+      } else if (mode === "off") {
+        tips = [];
+      }
+      task.tooltipInfo = tips;
+
+      // Milestones
+      const ms = Array.isArray(task.Milestones) ? task.Milestones : [];
+      for (const m of ms) {
+        const valid = m?.start instanceof Date && !isNaN(m.start.getTime());
+        const dateFormatted = valid
+          ? formatters.startDateFormatter.format(m.start)
+          : "";
+
+        let rows: VisualTooltipDataItem[] = [];
+        if (tt.showMilestoneType.value) {
+          rows.push({
+            displayName:
+              (m?.type as string) || loc.getDisplayName("Visual_Label_Today"),
+            value: tt.showMilestoneDate.value ? dateFormatted : "",
           });
         }
+        if (tt.showMilestoneName.value && m?.category) {
+          rows.unshift({
+            displayName: loc.getDisplayName("Visual_Milestone_Name"),
+            value: m.category,
+          });
+        }
+        if (!tt.showMilestoneDate.value) {
+          // remove any date-only rows if date is hidden
+          rows = rows.filter((r) => r.value !== dateFormatted);
+        }
+
+        if (mode === "dates-only") {
+          rows =
+            tt.showMilestoneDate.value && dateFormatted
+              ? [{ displayName: " ", value: dateFormatted }]
+              : [];
+        } else if (mode === "off") {
+          rows = [];
+        }
+
+        m.tooltipInfo = rows;
       }
-    });
+    }
   }
+
+  // private static addTooltipInfoForTasks(
+  //   tasks: Task[],
+  //   formatters: GanttChartFormatters,
+  //   durationUnit: DurationUnit,
+  //   localizationManager: powerbi.extensibility.ILocalizationManager,
+  //   isEndDateFilled: boolean,
+  //   settings: GanttChartSettingsModel
+  // ): void {
+  //   if (!Array.isArray(tasks) || !formatters) {
+  //     return;
+  //   }
+
+  //   const legendTitle =
+  //     settings?.legendCardSettings?.titleText?.value || undefined;
+  //   const dateTypesSettings = settings?.dateTypeCardSettings;
+
+  //   for (const task of tasks) {
+  //     // Task tooltip
+  //     task.tooltipInfo = SHOW_DEFAULT_TOOLTIPS
+  //       ? Gantt.getTooltipInfo(
+  //           task,
+  //           formatters,
+  //           durationUnit,
+  //           localizationManager,
+  //           isEndDateFilled,
+  //           legendTitle
+  //         )
+  //       : [];
+
+  //     // Milestones tooltip (if any)
+  //     const milestones = Array.isArray(task.Milestones) ? task.Milestones : [];
+  //     for (const m of milestones) {
+  //       // Guard against bad dates
+  //       const dateToFormat =
+  //         m?.start instanceof Date && !isNaN(m.start.getTime())
+  //           ? m.start
+  //           : undefined;
+
+  //       const dateFormatted = dateToFormat
+  //         ? formatters.startDateFormatter.format(dateToFormat)
+  //         : "";
+
+  //       m.tooltipInfo = Gantt.getTooltipForMilestoneLine(
+  //         dateFormatted,
+  //         localizationManager,
+  //         dateTypesSettings,
+  //         [m?.type], // milestone title
+  //         [m?.category] // optional “Milestone Name” row
+  //       );
+  //     }
+  //   }
+  // }
 
   private static createTask(
     values: GanttColumns<any>,
@@ -1586,42 +1722,6 @@ export class Gantt implements IVisual {
     } else {
       addedParents.push(taskParentName);
 
-      // const parentTask: Task = {
-      //   index: 0,
-      //   name: taskParentName,
-      //   start: null,
-      //   duration: null,
-      //   completion: null,
-      //   resource: null,
-      //   end: null,
-      //   parent: null,
-      //   children: [task],
-      //   visibility: true,
-      //   taskType: null,
-      //   description: null,
-      //   color: null,
-      //   tooltipInfo: null,
-      //   extraInformation: collapsedTasks.includes(taskParentName)
-      //     ? extraInformation
-      //     : null,
-      //   daysOffList: null,
-      //   wasDowngradeDurationUnit: null,
-      //   selected: null,
-      //   identity: selectionBuilder.createSelectionId(),
-      //   Milestones:
-      //     milestone && startDate
-      //       ? [
-      //           {
-      //             type: milestone,
-      //             start: startDate,
-      //             tooltipInfo: null,
-      //             category: categoryValue as string,
-      //           },
-      //         ]
-      //       : [],
-      //   highlight: highlight !== null,
-      // };
-
       const parentTask: Task = {
         index: 0,
         name: taskParentName,
@@ -1636,18 +1736,15 @@ export class Gantt implements IVisual {
         taskType: null,
         description: null,
         color: null,
-        tooltipInfo: null,
+        tooltipInfo: [],
         extraInformation: collapsedTasks.includes(taskParentName)
           ? extraInformation
-          : null,
-        daysOffList: null,
-        wasDowngradeDurationUnit: null,
-        selected: null,
+          : [],
+        daysOffList: [],
+        wasDowngradeDurationUnit: false,
+        selected: false,
         identity: selectionBuilder.createSelectionId(),
-
-        // don't assign child's milestone to the parent
-        Milestones: [],
-
+        Milestones: [], // do not inherit child milestones
         highlight: highlight !== null,
       };
 
@@ -1994,6 +2091,12 @@ export class Gantt implements IVisual {
         dataView.metadata.columns.findIndex((col) =>
           Gantt.hasRole(col, GanttRole.Resource)
         ) !== -1;
+
+    const isTooltipFilled: boolean = dataView.metadata.columns.some(
+      (col) => Gantt.hasRole(col, "Tooltips") || Gantt.hasRole(col, "Tooltip")
+    );
+
+    this.hasTooltipFields = isTooltipFilled;
 
     const legendData: LegendData = Gantt.createLegend(
       host,
@@ -3342,12 +3445,14 @@ export class Gantt implements IVisual {
    * @param milestoneType milestone type
    */
   private getMilestoneColor(milestoneType: string): string {
-    const milestone: MilestoneDataPoint =
-      this.viewModel.milestonesData.dataPoints.filter(
-        (dataPoint: MilestoneDataPoint) => dataPoint.name === milestoneType
-      )[0];
-
-    return this.colorHelper.getHighContrastColor("foreground", milestone.color);
+    const dp = this.viewModel.milestonesData?.dataPoints?.find(
+      (d) => d.name === milestoneType
+    );
+    const fallback = Gantt.DefaultValues.TaskColor;
+    return this.colorHelper.getHighContrastColor(
+      "foreground",
+      dp?.color ?? fallback
+    );
   }
 
   private getMilestonePath(
@@ -4120,43 +4225,44 @@ export class Gantt implements IVisual {
    * @param milestoneTitle
    * @param timestamp the milestone to be shown in the time axis (default Date.now())
    */
+
   private createMilestoneLine(
     tasks: GroupedTask[],
     timestamp: number = Date.now(),
     milestoneTitle?: string
   ): void {
-    if (!this.hasNotNullableDates) {
-      return;
-    }
+    if (!this.hasNotNullableDates) return;
 
+    const today = new Date(timestamp);
     const todayColor: string =
       this.viewModel.settings.dateTypeCardSettings.todayColor.value.value;
-    // TODO: add not today milestones color
-    const milestoneDates = [new Date(timestamp)];
-    tasks.forEach((task: GroupedTask) => {
-      const subtasks: Task[] = task.tasks;
-      subtasks.forEach((task: Task) => {
-        if (!lodashIsEmpty(task.Milestones)) {
-          task.Milestones.forEach((milestone) => {
-            if (!milestoneDates.includes(milestone.start)) {
-              milestoneDates.push(milestone.start);
-            }
-          });
+
+    // Collect unique milestone dates: include “today” + all task milestone dates
+    const milestoneDates: Date[] = [];
+    const pushUnique = (d: Date) => {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return;
+      const t = d.getTime();
+      if (!milestoneDates.some((x) => x.getTime() === t)) {
+        milestoneDates.push(d);
+      }
+    };
+    pushUnique(today);
+
+    tasks.forEach((group: GroupedTask) => {
+      group.tasks.forEach((t: Task) => {
+        if (Array.isArray(t.Milestones) && t.Milestones.length) {
+          t.Milestones.forEach((m) => pushUnique(m.start));
         }
       });
     });
 
-    const line: Line[] = [];
-
     const dateTypeSettings: DateTypeCardSettings =
       this.viewModel.settings.dateTypeCardSettings;
-    milestoneDates.forEach((date: Date) => {
-      //compare the X coordinate (number) to the timestamp X:
-      const isToday =
-        Gantt.TimeScale(date) === Gantt.TimeScale(new Date(timestamp));
-      const title = isToday ? milestoneTitle : "Milestone";
 
-      const lineOptions = {
+    const lines: Line[] = milestoneDates.map((date) => {
+      const isToday = Gantt.TimeScale(date) === Gantt.TimeScale(today);
+      const title = isToday ? milestoneTitle : "Milestone";
+      return {
         x1: Gantt.TimeScale(date),
         y1: Gantt.MilestoneTop,
         x2: Gantt.TimeScale(date),
@@ -4165,38 +4271,35 @@ export class Gantt implements IVisual {
           date.toLocaleDateString(),
           this.localizationManager,
           dateTypeSettings,
-          [title]
+          [title as any]
         ),
       };
-      line.push(lineOptions);
     });
 
-    const chartLineSelection: Selection<Line> = this.chartGroup
-      .selectAll(Gantt.ChartLine.selectorName)
-      .data(line);
+    const chartLineSelection = this.chartGroup
+      .selectAll<SVGLineElement, Line>(Gantt.ChartLine.selectorName)
+      .data(lines);
 
     const chartLineSelectionMerged = chartLineSelection
       .enter()
-      .append("line")
+      .append<SVGLineElement>("line")
       .merge(chartLineSelection);
 
-    chartLineSelectionMerged.classed(Gantt.ChartLine.className, true);
-
     chartLineSelectionMerged
-      .attr("x1", (line: Line) => line.x1)
-      .attr("y1", (line: Line) => line.y1)
-      .attr("x2", (line: Line) => line.x2)
-      .attr("y2", (line: Line) => line.y2)
-      .style("stroke", (line: Line) => {
-        const color: string =
-          line.x1 === Gantt.TimeScale(timestamp)
-            ? todayColor
-            : Gantt.DefaultValues.MilestoneLineColor;
+      .classed(Gantt.ChartLine.className, true)
+      .attr("x1", (l: Line) => l.x1)
+      .attr("y1", (l: Line) => l.y1)
+      .attr("x2", (l: Line) => l.x2)
+      .attr("y2", (l: Line) => l.y2)
+      .style("stroke", (l: Line) => {
+        const isToday = l.x1 === Gantt.TimeScale(today);
+        const color = isToday
+          ? todayColor
+          : Gantt.DefaultValues.MilestoneLineColor;
         return this.colorHelper.getHighContrastColor("foreground", color);
       });
 
     this.renderTooltip(chartLineSelectionMerged);
-
     chartLineSelection.exit().remove();
   }
 
@@ -4217,6 +4320,7 @@ export class Gantt implements IVisual {
   private renderTooltip(
     selection: Selection<Line | Task | MilestonePath>
   ): void {
+    //if (!this.hasTooltipFields) return; -> show default tooltips
     this.tooltipServiceWrapper.addTooltip(
       selection,
       (tooltipEvent: TooltipEnabledDataPoint) => tooltipEvent.tooltipInfo
@@ -4362,6 +4466,18 @@ export class Gantt implements IVisual {
             settings.taskResourceCardSettings.visible = false;
           }
           break;
+
+        case "tooltipConfig": {
+          const mode =
+            this.formattingSettings.tooltipConfigCardSettings.mode.value;
+          if (mode && (mode as any).value === "off") {
+            // keep only the mode selector visible so users can turn it back on
+            this.formattingSettings.tooltipConfigCardSettings.slices = [
+              this.formattingSettings.tooltipConfigCardSettings.mode,
+            ];
+          }
+          break;
+        }
       }
     });
   }
