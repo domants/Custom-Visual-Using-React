@@ -13,36 +13,6 @@ The GitHub repository below served as a valuable reference for this build. Big t
 Follow Microsoft's official setup and prerequisites guide:
 [Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
 
----
-
-## About the Gantt Visual
-
-A **Gantt chart** is a bar chart that illustrates a project timeline.
-
-This custom visual supports:
-
-* Tasks, Start Dates, Durations, % Complete, Resources, Milestone Icon with legend next to it
-* Percent-complete shading
-* Vertical "TODAY" line
-* Legend-based grouping/filtering
-
-## My Updates:
-### Milestone Settings
-* Added milestone icon flag (pennant)
-* Option to display legend text next to the milestone icon
-* Ability to apply milestone icon to all occurrences
-
-### Tooltip Settings
-* Option to change tooltip mode (All, Dates only, Off)
-
-
-![Gantt chart screenshot](assets/screenshot.png)
-
-
----
-
-# To Get Started, check below:
-
 ## Create a React Custom Visual
 
 Follow the Microsoft guide: [Create a React Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual)
@@ -74,6 +44,32 @@ dotnet tool update --global PowerShell
 ```
 
 Or you can visit this link to find more details: [Fixing pwsh issue](https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core)
+
+---
+
+## About the Gantt Visual
+
+A **Gantt chart** is a bar chart that illustrates a project timeline.
+
+This custom visual supports:
+
+* Tasks, Start Dates, Durations, % Complete, Resources, Milestone Icon with legend next to it
+* Percent-complete shading
+* Vertical "TODAY" line
+* Legend-based grouping/filtering
+
+## My Updates:
+### Milestone Settings
+* Added milestone icon flag (pennant)
+* Option to display legend text next to the milestone icon
+* Ability to apply milestone icon to all occurrences
+
+### Tooltip Settings
+* Option to change tooltip mode (All, Dates only, Off)
+
+
+![Gantt chart screenshot](assets/screenshot.png)
+
 
 ---
 
