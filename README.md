@@ -1,36 +1,21 @@
 # Build a Custom Power BI Visual with React
 
-Below is the GitHub repository I'm using as a reference for this repo. Thanks to those guys who participated on this build.
+The GitHub repository below served as a valuable reference for this build. Big thanks to everyone who contributed.
 
 **Reference**: *[powerbi-visuals-gantt](https://github.com/microsoft/powerbi-visuals-gantt)*
 
-Copy below if you want to clone the Repo
-
-```bash
-git clone https://github.com/microsoft/powerbi-visuals-gantt.git
-cd powerbi-visuals-gantt
-```
-
-### You can also see the link below for the single source of truth for all of the Power BI Custom Visuals
-
-[PowerBI-Visuals-AppSource](https://github.com/DataChant/PowerBI-Visuals-AppSource/tree/main)
-
-*The link above is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
-
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 **Development Setup**
 
 Follow Microsoft's official setup and prerequisites guide:
-👉 [Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
+[Environment setup docs](https://learn.microsoft.com/en-us/power-bi/developer/visuals/environment-setup?tabs=desktop)
 
 ---
 
-## 📊 About the Gantt Visual
-
-[![Build Status](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml)
+## About the Gantt Visual
 
 A **Gantt chart** is a bar chart that illustrates a project timeline.
 
@@ -56,6 +41,23 @@ This custom visual supports:
 
 ---
 
+# To Get Started, check below:
+
+## Create a React Custom Visual
+
+Follow the Microsoft guide: [Create a React Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual)
+
+---
+
+## Developer Mode
+
+Enable developer mode in Power BI Service:
+[Power BI Developer Settings](https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi)
+
+> Note: Developer mode works only in **Power BI Service** (not Desktop app).
+
+---
+
 ### Add Developer Certificate
 
 Run in **CMD**:
@@ -75,15 +77,6 @@ Or you can visit this link to find more details: [Fixing pwsh issue](https://cam
 
 ---
 
-## ⚙️ Developer Mode
-
-Enable developer mode in Power BI Service:
-[Power BI Developer Settings](https://app.powerbi.com/user/user-settings/developer-settings?experience=power-bi)
-
-> ⚠️ Note: Developer mode works only in **Power BI Service** (not Desktop app).
-
----
-
 ### If you want to clone this repo:
 
 Copy below command:
@@ -91,7 +84,7 @@ Copy below command:
 git clone https://github.com/domants/Custom-Visual-Using-React.git
 ```
 
-## 📦 Install Dependencies
+## Install Dependencies
 ### cd to your root folder and run the below command to install required packages.
 
 Global Installation (CLI Tool)
@@ -109,14 +102,7 @@ If any are missing, rerun `npm install d3 @types/d3 core-js powerbi-visuals-api`
 
 ---
 
-## 📈 Create a React Custom Visual
-
-Follow the Microsoft guide:
-👉 [Create a React Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/create-react-visual)
-
----
-
-## 🔍 Debugging & Testing
+## Debugging & Testing
 
 If your changes don’t show up, authorize browser access:
 
@@ -129,6 +115,13 @@ https://localhost:8080/assets
 ### Package your Power BI visual. Follow the link below:
 *[Package PBI Visual](https://learn.microsoft.com/en-us/power-bi/developer/visuals/package-visual)*
 
+---
+
+### You can also see the link below for the single source of truth for all of the Power BI Custom Visuals
+
+[PowerBI-Visuals-AppSource](https://github.com/DataChant/PowerBI-Visuals-AppSource/tree/main)
+
+*The link above is a repository of Power BI custom visuals that are periodically exported from Microsoft AppSource to support the Power BI community*
 
 ---
 
