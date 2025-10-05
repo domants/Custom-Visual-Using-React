@@ -3455,28 +3455,91 @@ export class Gantt implements IVisual {
     );
   }
 
+  // private getMilestonePath(
+  //   milestoneType: string,
+  //   taskConfigHeight: number
+  // ): string {
+  //   let shape: string;
+  //   const convertedHeight: number = Gantt.getBarHeight(taskConfigHeight);
+  //   const milestone: MilestoneDataPoint =
+  //     this.viewModel.milestonesData.dataPoints.filter(
+  //       (dataPoint: MilestoneDataPoint) => dataPoint.name === milestoneType
+  //     )[0];
+  //   switch (milestone.shapeType) {
+  //     case MilestoneShape.Rhombus:
+  //       shape = drawDiamond(convertedHeight);
+  //       break;
+  //     case MilestoneShape.Square:
+  //       shape = drawRectangle(convertedHeight);
+  //       break;
+  //     case MilestoneShape.Flag:
+  //       shape = drawFlag(convertedHeight);
+  //   }
+
+  //   return shape;
+  // }
+
+  private getGlobalMilestoneShape(): MilestoneShape | null {
+    const objs = (this.viewModel?.dataView?.metadata?.objects ?? {}) as any;
+    const m = objs["milestones"] as any;
+    if (!m) return null;
+
+    const applyAll = m.applyToAll === true;
+    if (!applyAll) return null;
+
+    // enumeration can come through as a plain string ("Flag") or { value: "Flag" }
+    const raw =
+      typeof m.globalShape === "string" ? m.globalShape : m.globalShape?.value;
+
+    switch (raw) {
+      case "Rhombus":
+        return MilestoneShape.Rhombus;
+      case "Square":
+        return MilestoneShape.Square;
+      case "Flag":
+        return MilestoneShape.Flag;
+      default:
+        return MilestoneShape.Flag; // safe default
+    }
+  }
+
   private getMilestonePath(
     milestoneType: string,
     taskConfigHeight: number
   ): string {
-    let shape: string;
-    const convertedHeight: number = Gantt.getBarHeight(taskConfigHeight);
-    const milestone: MilestoneDataPoint =
-      this.viewModel.milestonesData.dataPoints.filter(
-        (dataPoint: MilestoneDataPoint) => dataPoint.name === milestoneType
-      )[0];
-    switch (milestone.shapeType) {
-      case MilestoneShape.Rhombus:
-        shape = drawDiamond(convertedHeight);
-        break;
-      case MilestoneShape.Square:
-        shape = drawRectangle(convertedHeight);
-        break;
-      case MilestoneShape.Flag:
-        shape = drawFlag(convertedHeight);
+    const convertedHeight = Gantt.getBarHeight(taskConfigHeight);
+
+    // 1) Check the new global override first
+    const globalShape = this.getGlobalMilestoneShape();
+    if (globalShape) {
+      switch (globalShape) {
+        case MilestoneShape.Rhombus:
+          return drawDiamond(convertedHeight);
+        case MilestoneShape.Square:
+          return drawRectangle(convertedHeight);
+        case MilestoneShape.Flag:
+        default:
+          return drawFlag(convertedHeight);
+      }
     }
 
-    return shape;
+    // 2) Fall back to per-milestone (specific) shape from the category object
+    const milestone: MilestoneDataPoint | undefined =
+      this.viewModel.milestonesData?.dataPoints?.find(
+        (dp) => dp.name === milestoneType
+      );
+
+    const shape =
+      (milestone?.shapeType as MilestoneShape) ?? MilestoneShape.Flag;
+    switch (shape) {
+      case MilestoneShape.Rhombus:
+        return drawDiamond(convertedHeight);
+      case MilestoneShape.Square:
+        return drawRectangle(convertedHeight);
+      case MilestoneShape.Flag:
+      default:
+        return drawFlag(convertedHeight);
+    }
   }
 
   /**
@@ -4402,8 +4465,157 @@ export class Gantt implements IVisual {
     }
   }
 
+  // public getFormattingModel(): powerbi.visuals.FormattingModel {
+  //   this.filterSettingsCards();
+
+  //   // localize dropdown items manually
+  //   const m = this.formattingSettings.milestonesCardSettings;
+  //   m.globalShape.items = [
+  //     {
+  //       value: "Flag",
+  //       displayName: this.localizationManager.getDisplayName(
+  //         "Milestone_Shape_Flag"
+  //       ),
+  //     },
+  //     {
+  //       value: "Rhombus",
+  //       displayName: this.localizationManager.getDisplayName(
+  //         "Milestone_Shape_Rhombus"
+  //       ),
+  //     },
+  //     {
+  //       value: "Square",
+  //       displayName: this.localizationManager.getDisplayName(
+  //         "Milestone_Shape_Square"
+  //       ),
+  //     },
+  //   ];
+  //   this.formattingSettings.setLocalizedOptions(this.localizationManager);
+
+  //   return this.formattingSettingsService.buildFormattingModel(
+  //     this.formattingSettings
+  //   );
+  // }
+
+  // public filterSettingsCards() {
+  //   const settings = this.formattingSettings;
+
+  //   settings.cards.forEach((element) => {
+  //     switch (element.name) {
+  //       case Gantt.MilestonesPropertyIdentifier.objectName: {
+  //         const card = settings.milestonesCardSettings;
+
+  //         // Set visibility based on current value
+  //         card.shapeType.visible = !card.applyToAll.value;
+  //         card.globalShape.visible = !!card.applyToAll.value;
+
+  //         const mPoints = this.viewModel?.milestonesData?.dataPoints;
+
+  //         if (!mPoints || !mPoints.length) {
+  //           // No milestone categories bound: still show our controls
+  //           card.visible = true;
+  //           card.slices = [
+  //             card.showLabels,
+  //             card.applyToAll,
+  //             card.globalShape,
+  //             card.shapeType,
+  //             card.fill,
+  //           ];
+  //           break;
+  //         }
+
+  //         // Milestones exist: build per-type slices, then prepend our controls
+  //         const uniq = Gantt.getUniqueMilestones(mPoints);
+  //         settings.populateMilestones(uniq); // populates card.slices
+
+  //         const rest = card.slices.filter(
+  //           (s) =>
+  //             s !== card.showLabels &&
+  //             s !== card.applyToAll &&
+  //             s !== card.globalShape &&
+  //             s !== card.shapeType &&
+  //             s !== card.fill
+  //         );
+
+  //         card.slices = [
+  //           card.showLabels,
+  //           card.applyToAll,
+  //           card.globalShape,
+  //           card.shapeType,
+  //           card.fill,
+  //           ...rest,
+  //         ];
+  //         break;
+  //       }
+
+  //       case Gantt.LegendPropertyIdentifier.objectName: {
+  //         if (
+  //           this.viewModel &&
+  //           !this.viewModel.isDurationFilled &&
+  //           !this.viewModel.isEndDateFilled
+  //         ) {
+  //           break;
+  //         }
+
+  //         const dataPoints = this.viewModel?.legendData?.dataPoints;
+  //         if (!dataPoints || !dataPoints.length) break;
+
+  //         settings.populateLegend(dataPoints, this.localizationManager);
+  //         break;
+  //       }
+
+  //       case Gantt.TaskResourcePropertyIdentifier.objectName: {
+  //         if (!this.viewModel.isResourcesFilled) {
+  //           settings.taskResourceCardSettings.visible = false;
+  //         }
+  //         break;
+  //       }
+
+  //       case "tooltipConfig": {
+  //         const mode =
+  //           this.formattingSettings.tooltipConfigCardSettings.mode.value;
+  //         if ((mode as any)?.value === "off") {
+  //           this.formattingSettings.tooltipConfigCardSettings.slices = [
+  //             this.formattingSettings.tooltipConfigCardSettings.mode,
+  //           ];
+  //         }
+  //         break;
+  //       }
+  //     }
+  //   });
+  // }
+
   public getFormattingModel(): powerbi.visuals.FormattingModel {
+    const m = this.formattingSettings.milestonesCardSettings;
+
+    // Localize globalShape dropdown items
+    const items = [
+      {
+        value: "Flag",
+        displayName: this.localizationManager.getDisplayName(
+          "Milestone_Shape_Flag"
+        ),
+      },
+      {
+        value: "Rhombus",
+        displayName: this.localizationManager.getDisplayName(
+          "Milestone_Shape_Rhombus"
+        ),
+      },
+      {
+        value: "Square",
+        displayName: this.localizationManager.getDisplayName(
+          "Milestone_Shape_Square"
+        ),
+      },
+    ];
+    m.globalShape.items = items;
+
+    const raw = (m.globalShape.value as any)?.value ?? m.globalShape.value;
+    m.globalShape.value = items.find((i) => i.value === raw) ?? items[0];
+
     this.filterSettingsCards();
+
     this.formattingSettings.setLocalizedOptions(this.localizationManager);
     return this.formattingSettingsService.buildFormattingModel(
       this.formattingSettings
@@ -4411,34 +4623,45 @@ export class Gantt implements IVisual {
   }
 
   public filterSettingsCards() {
-    const settings: GanttChartSettingsModel = this.formattingSettings;
+    const settings = this.formattingSettings;
 
     settings.cards.forEach((element) => {
       switch (element.name) {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
-          if (
-            this.viewModel &&
-            !this.viewModel.isDurationFilled &&
-            !this.viewModel.isEndDateFilled
-          ) {
-            // still allow user to see the milestones card (for the showLabels toggle)
-            // even if neither Duration nor EndDate is bound
-          }
+          const card = settings.milestonesCardSettings;
+          const isAll = !!card.applyToAll.value;
 
-          const mPoints: MilestoneDataPoint[] =
-            this.viewModel && this.viewModel.milestonesData?.dataPoints;
+          const mPoints = this.viewModel?.milestonesData?.dataPoints;
+          card.slices = []; // start clean
+          card.shapeType.visible = false; // never show the base "Shape"
+          card.globalShape.visible = isAll; // harmless; slices drive what shows
 
+          // No milestone categories: only show toggle and (if ON) the global picklist
           if (!mPoints || !mPoints.length) {
-            // Keep the card visible and show only the toggle when there are no per-type slices
-            settings.milestonesCardSettings.visible = true;
-            settings.milestonesCardSettings.slices = [
-              settings.milestonesCardSettings.showLabels,
-            ];
+            card.slices.push(card.showLabels, card.applyToAll);
+            if (isAll) card.slices.push(card.globalShape);
             break;
           }
 
+          // We have categories — build the per-type controls
           const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq); // this will keep showLabels as the first slice
+          settings.populateMilestones(uniq); // mutates card.slices with per-type items
+
+          // Pull out the per-type slices (everything except the top-level ones)
+          const top = new Set([
+            card.showLabels,
+            card.applyToAll,
+            card.globalShape,
+            card.shapeType,
+            card.fill,
+          ]);
+          const perType = card.slices.filter((s) => !top.has(s));
+
+          // Recompose slices based on the toggle:
+          card.slices = isAll
+            ? [card.showLabels, card.applyToAll, card.globalShape] // ONLY global picklist
+            : [card.showLabels, card.applyToAll, ...perType]; // per-type controls
+
           break;
         }
 
@@ -4447,31 +4670,25 @@ export class Gantt implements IVisual {
             this.viewModel &&
             !this.viewModel.isDurationFilled &&
             !this.viewModel.isEndDateFilled
-          ) {
-            return;
-          }
-
-          const dataPoints: LegendDataPoint[] =
-            this.viewModel && this.viewModel.legendData.dataPoints;
-          if (!dataPoints || !dataPoints.length) {
-            return;
-          }
-
+          )
+            break;
+          const dataPoints = this.viewModel?.legendData?.dataPoints;
+          if (!dataPoints?.length) break;
           settings.populateLegend(dataPoints, this.localizationManager);
           break;
         }
 
-        case Gantt.TaskResourcePropertyIdentifier.objectName:
+        case Gantt.TaskResourcePropertyIdentifier.objectName: {
           if (!this.viewModel.isResourcesFilled) {
             settings.taskResourceCardSettings.visible = false;
           }
           break;
+        }
 
         case "tooltipConfig": {
           const mode =
             this.formattingSettings.tooltipConfigCardSettings.mode.value;
-          if (mode && (mode as any).value === "off") {
-            // keep only the mode selector visible so users can turn it back on
+          if ((mode as any)?.value === "off") {
             this.formattingSettings.tooltipConfigCardSettings.slices = [
               this.formattingSettings.tooltipConfigCardSettings.mode,
             ];

@@ -455,24 +455,36 @@
       }
     },
     "milestones": {
+      "displayNameKey": "Card_Milestones",
       "properties": {
         "fill": {
           "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
+            "fill": { "solid": { "color": true } }
           }
         },
         "shapeType": {
-          "type": {
-            "text": true
-          }
+          "type": { "text": true }
         },
         "showLabels": {
           "displayNameKey": "Visual_Milestone_ShowLabels",
           "type": { "bool": true }
+        },
+        "applyToAll": {
+          "displayNameKey": "Milestone_ApplyScope",
+          "type": { "bool": true }
+        },
+        "globalShape": {
+          "displayNameKey": "Milestone_GlobalShape",
+          "type": {
+            "enumeration": [
+              { "displayNameKey": "Milestone_Shape_Flag", "value": "Flag" },
+              {
+                "displayNameKey": "Milestone_Shape_Rhombus",
+                "value": "Rhombus"
+              },
+              { "displayNameKey": "Milestone_Shape_Square", "value": "Square" }
+            ]
+          }
         }
       }
     },
