@@ -1,6 +1,6 @@
 //utils.ts
 import { getRandomNumber } from "powerbi-visuals-utils-testutils";
-import lodashRange from "lodash.range";
+import { range as lodashRange } from "lodash";
 
 export const drawRoundedRectByPath = (
   x: number,
