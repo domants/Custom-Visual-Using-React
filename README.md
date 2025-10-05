@@ -32,7 +32,7 @@ Follow Microsoft's official setup and prerequisites guide:
 
 [![Build Status](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-gantt/actions/workflows/build.yml)
 
-A **Gantt chart** is a bar chart that illustrates a project timeline or schedule.
+A **Gantt chart** is a bar chart that illustrates a project timeline.
 
 This custom visual supports:
 
@@ -41,9 +41,18 @@ This custom visual supports:
 * Vertical "TODAY" line
 * Legend-based grouping/filtering
 
+## My Updates:
+### Milestone Settings
+* Added milestone icon flag (pennant)
+* Option to display legend text next to the milestone icon
+* Ability to apply milestone icon to all occurrences
+
+### Tooltip Settings
+* Option to change tooltip mode (All, Dates only, Off)
+
+
 ![Gantt chart screenshot](assets/screenshot.png)
 
-See also: [Microsoft AppSource Gantt Chart](https://store.office.com/en-us/app.aspx?assetid=WA104380765)
 
 ---
 
@@ -51,20 +60,18 @@ See also: [Microsoft AppSource Gantt Chart](https://store.office.com/en-us/app.a
 
 Run in **CMD**:
 
+Open cmd (win + r then type cmd)
 ```bash
 pbiviz install-cert
 ```
-<img width="597" height="244" alt="image" src="https://github.com/user-attachments/assets/b0c93803-834e-46e2-8e50-2ed881124059" />
 
-
-
-If you encounter the `pwsh is not recognized` error:
+If you encounter the `pwsh is not recognized` error, run below command:
 
 ```bash
 dotnet tool update --global PowerShell
 ```
 
-More details: [Fixing pwsh issue](https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core)
+Or you can visit this link to find more details: [Fixing pwsh issue](https://camkode.com/posts/fixing-pwsh-is-not-recognized-error-in-powershell-core)
 
 ---
 
