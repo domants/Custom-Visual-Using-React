@@ -77,18 +77,24 @@ Enable developer mode in Power BI Service:
 
 ---
 
-### Install Power BI Visual Tools (pbiviz)
+### If you want to clone this repo:
 
-```bash
-npm i -g powerbi-visuals-tools
+Copy below command:
+```
+git clone https://github.com/domants/Custom-Visual-Using-React.git
 ```
 
-## 📦 Install Dependencies (D3.js)
+## 📦 Install Dependencies
+### cd to your root folder and run the below command to install required packages.
 
-Make sure required packages are installed:
+Global Installation (CLI Tool)
+```
+npm install -g powerbi-visuals-tools
+```
 
-```bash
-npm install d3 @types/d3 core-js powerbi-visuals-api
+Project Dependencies: To give you the building blocks to create, style, test, and optimize custom visuals for Power BI.
+```
+npm install d3 @types/d3 core-js powerbi-visuals-api powerbi-visuals-utils-interactivityutils powerbi-visuals-utils-testutils lodash @types/lodash powerbi-visuals-utils-formattingutils powerbi-visuals-utils-chartutils powerbi-visuals-utils-svgutils powerbi-visuals-utils-formattingmodel powerbi-visuals-utils-colorutils powerbi-visuals-utils-tooltiputils powerbi-visuals-utils-typeutils
 ```
 
 Check under `node_modules`. -> d3 folder
