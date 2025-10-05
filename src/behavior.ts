@@ -98,7 +98,9 @@ export class Behavior implements IInteractiveBehavior {
       selectionHandler.handleSelection(d, event.ctrlKey || event.metaKey);
       event.stopPropagation();
 
-      const selectedType: string = d.tooltipInfo;
+      //const selectedType: string = d.tooltipInfo
+      const selectedType: string = d.label;
+
       options.taskSelection.each((d: Task) => {
         if (d.taskType === selectedType && d.parent && !d.selected) {
           selectionHandler.handleSelection(d, event.ctrlKey || event.metaKey);

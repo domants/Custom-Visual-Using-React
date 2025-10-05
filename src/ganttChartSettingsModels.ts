@@ -160,7 +160,6 @@ export class GeneralCardSettings extends Card {
 
   barsRoundedCorners = new formattingSettings.ToggleSwitch({
     name: "barsRoundedCorners",
-    displayName: "Bars Rounded Corners",
     displayNameKey: "Visual_BarsRoundedCorners",
     value: true,
   });
@@ -404,6 +403,103 @@ export class TaskCompletionCardSettings extends Card {
   topLevelSlice?: formattingSettings.SimpleSlice<any> = this.show;
 }
 
+// export class TooltipConfigCardSettings extends Card {
+//   dateFormat = new formattingSettings.TextInput({
+//     name: "dateFormat",
+//     displayNameKey: "Visual_TooltipSettings_DateFormat",
+//     placeholder: "",
+//     value: "",
+//   });
+
+//   // Use the formatting model’s dropdown/toggle components you actually import (see next issue)
+//   mode = new formattingSettings.ItemDropdown({
+//     name: "mode",
+//     displayNameKey: "Tooltip_Mode",
+//     items: [
+//       { value: "all", displayName: "All" },
+//       { value: "dates-only", displayName: "Dates only" },
+//       { value: "off", displayName: "Off" },
+//     ],
+//     value: { value: "all", displayName: "All" },
+//   });
+
+//   showLegend = new formattingSettings.ToggleSwitch({
+//     name: "showLegend",
+//     displayNameKey: "Tooltip_Show_Legend",
+//     value: true,
+//   });
+//   showTaskName = new formattingSettings.ToggleSwitch({
+//     name: "showTaskName",
+//     displayNameKey: "Tooltip_Show_Task",
+//     value: true,
+//   });
+//   showStart = new formattingSettings.ToggleSwitch({
+//     name: "showStart",
+//     displayNameKey: "Tooltip_Show_StartDate",
+//     value: true,
+//   });
+//   showEnd = new formattingSettings.ToggleSwitch({
+//     name: "showEnd",
+//     displayNameKey: "Tooltip_Show_EndDate",
+//     value: true,
+//   });
+//   showDuration = new formattingSettings.ToggleSwitch({
+//     name: "showDuration",
+//     displayNameKey: "Tooltip_Show_Duration",
+//     value: true,
+//   });
+//   showCompletion = new formattingSettings.ToggleSwitch({
+//     name: "showCompletion",
+//     displayNameKey: "Tooltip_Show_Completion",
+//     value: true,
+//   });
+//   showResource = new formattingSettings.ToggleSwitch({
+//     name: "showResource",
+//     displayNameKey: "Tooltip_Show_Resource",
+//     value: true,
+//   });
+//   showExtraInfo = new formattingSettings.ToggleSwitch({
+//     name: "showExtraInfo",
+//     displayNameKey: "Tooltip_Show_Extra",
+//     value: true,
+//   });
+
+//   showMilestoneType = new formattingSettings.ToggleSwitch({
+//     name: "showMilestoneType",
+//     displayNameKey: "Tooltip_Show_MilestoneType",
+//     value: true,
+//   });
+//   showMilestoneName = new formattingSettings.ToggleSwitch({
+//     name: "showMilestoneName",
+//     displayNameKey: "Tooltip_Show_MilestoneName",
+//     value: true,
+//   });
+//   showMilestoneDate = new formattingSettings.ToggleSwitch({
+//     name: "showMilestoneDate",
+//     displayNameKey: "Tooltip_Show_MilestoneDate",
+//     value: true,
+//   });
+
+//   name = "tooltipConfig";
+//   displayNameKey = "Tooltip_Card_Title";
+
+//   slices = [
+//     this.mode,
+//     this.dateFormat,
+//     this.showLegend,
+//     this.showTaskName,
+//     this.showStart,
+//     this.showEnd,
+//     this.showDuration,
+//     this.showCompletion,
+//     this.showResource,
+//     this.showExtraInfo,
+//     this.showMilestoneType,
+//     this.showMilestoneName,
+//     this.showMilestoneDate,
+//   ];
+// }
+
 export class TooltipConfigCardSettings extends Card {
   dateFormat = new formattingSettings.TextInput({
     name: "dateFormat",
@@ -412,10 +508,10 @@ export class TooltipConfigCardSettings extends Card {
     value: "",
   });
 
-  // Use the formatting model’s dropdown/toggle components you actually import (see next issue)
   mode = new formattingSettings.ItemDropdown({
     name: "mode",
     displayNameKey: "Tooltip_Mode",
+    // keeping literal labels here is fine; or swap to keys and localize later
     items: [
       { value: "all", displayName: "All" },
       { value: "dates-only", displayName: "Dates only" },
@@ -429,36 +525,44 @@ export class TooltipConfigCardSettings extends Card {
     displayNameKey: "Tooltip_Show_Legend",
     value: true,
   });
+
   showTaskName = new formattingSettings.ToggleSwitch({
     name: "showTaskName",
     displayNameKey: "Tooltip_Show_Task",
     value: true,
   });
+
+  // FIXED: use keys that exist in your resjson
   showStart = new formattingSettings.ToggleSwitch({
     name: "showStart",
-    displayNameKey: "Tooltip_Show_StartDate",
+    displayNameKey: "Tooltip_Show_Start",
     value: true,
   });
+
   showEnd = new formattingSettings.ToggleSwitch({
     name: "showEnd",
-    displayNameKey: "Tooltip_Show_EndDate",
+    displayNameKey: "Tooltip_Show_End",
     value: true,
   });
+
   showDuration = new formattingSettings.ToggleSwitch({
     name: "showDuration",
     displayNameKey: "Tooltip_Show_Duration",
     value: true,
   });
+
   showCompletion = new formattingSettings.ToggleSwitch({
     name: "showCompletion",
     displayNameKey: "Tooltip_Show_Completion",
     value: true,
   });
+
   showResource = new formattingSettings.ToggleSwitch({
     name: "showResource",
     displayNameKey: "Tooltip_Show_Resource",
     value: true,
   });
+
   showExtraInfo = new formattingSettings.ToggleSwitch({
     name: "showExtraInfo",
     displayNameKey: "Tooltip_Show_Extra",
@@ -470,11 +574,13 @@ export class TooltipConfigCardSettings extends Card {
     displayNameKey: "Tooltip_Show_MilestoneType",
     value: true,
   });
+
   showMilestoneName = new formattingSettings.ToggleSwitch({
     name: "showMilestoneName",
     displayNameKey: "Tooltip_Show_MilestoneName",
     value: true,
   });
+
   showMilestoneDate = new formattingSettings.ToggleSwitch({
     name: "showMilestoneDate",
     displayNameKey: "Tooltip_Show_MilestoneDate",
