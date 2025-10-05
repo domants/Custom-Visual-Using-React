@@ -53,7 +53,7 @@ A **Gantt chart** is a bar chart that illustrates a project timeline.
 
 This custom visual supports:
 
-* Tasks, Start Dates, Durations, % Complete, Resources, Milestone Icon with legend next to it
+* Tasks, Start Dates, Durations, % Complete, Resources.
 * Percent-complete shading
 * Vertical "TODAY" line
 * Legend-based grouping/filtering
