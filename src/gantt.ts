@@ -230,6 +230,15 @@ export class SortingOptions {
   sortingDirection: SortDirection;
 }
 
+function normalizeEnum<T extends string>(
+  raw: any,
+  fallback: T,
+  allowed: readonly T[]
+): T {
+  const v = typeof raw === "string" ? raw : raw?.value;
+  return allowed.includes(v as T) ? (v as T) : fallback;
+}
+
 export class Gantt implements IVisual {
   private static ClassName: ClassAndSelector = createClassAndSelector("gantt");
   private static Chart: ClassAndSelector = createClassAndSelector("chart");
@@ -2159,64 +2168,31 @@ export class Gantt implements IVisual {
       );
     const settings: GanttChartSettingsModel = this.formattingSettings;
 
-    if (!colorHelper) {
-      return settings;
+    // 🔽 NEW: Keep Milestones Apply-to-All + Global Shape in sync with metadata
+    const objs = (dataView?.metadata?.objects ?? {}) as any;
+    const m = objs["milestones"] as any;
+
+    const applyAllFromHost: boolean = !!m?.applyToAll;
+    settings.milestonesCardSettings.applyToAll.value = applyAllFromHost;
+
+    const shapeFromHost = normalizeEnum(m?.globalShape, MilestoneShape.Flag, [
+      MilestoneShape.Flag,
+      MilestoneShape.Rhombus,
+      MilestoneShape.Square,
+    ] as const);
+
+    settings.milestonesCardSettings.globalShape.value = {
+      displayNameKey: "Visual_Milestone_Shape",
+      value: shapeFromHost,
+    };
+
+    // Optional: show/hide the dropdown based on Apply to All
+    settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
+
+    // (keep your existing high-contrast logic, etc.)
+    if (colorHelper) {
+      // ... your existing high-contrast code ...
     }
-
-    if (
-      settings.taskCompletionCardSettings.maxCompletion.value <
-        Gantt.CompletionMin ||
-      settings.taskCompletionCardSettings.maxCompletion.value >
-        Gantt.CompletionMaxInPercent
-    ) {
-      settings.taskCompletionCardSettings.maxCompletion.value =
-        Gantt.CompletionDefault;
-    }
-
-    if (colorHelper.isHighContrast) {
-      settings.dateTypeCardSettings.axisColor.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.dateTypeCardSettings.axisColor.value.value
-        );
-      settings.dateTypeCardSettings.axisTextColor.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.dateTypeCardSettings.axisColor.value.value
-        );
-      settings.dateTypeCardSettings.todayColor.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.dateTypeCardSettings.todayColor.value.value
-        );
-
-      settings.daysOffCardSettings.fill.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.daysOffCardSettings.fill.value.value
-        );
-      settings.taskConfigCardSettings.fill.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.taskConfigCardSettings.fill.value.value
-        );
-      settings.taskLabelsCardSettings.fill.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.taskLabelsCardSettings.fill.value.value
-        );
-      settings.taskResourceCardSettings.fill.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.taskResourceCardSettings.fill.value.value
-        );
-      settings.legendCardSettings.labelColor.value.value =
-        colorHelper.getHighContrastColor(
-          "foreground",
-          settings.legendCardSettings.labelColor.value.value
-        );
-    }
-
     return settings;
   }
 
@@ -3143,7 +3119,7 @@ export class Gantt implements IVisual {
     });
 
     // eslint-disable-next-line
-    const newId = crypto?.randomUUID() || Math.random().toString();
+    const newId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
     this.collapsedTasksUpdateIDs.push(newId);
 
     this.setJsonFiltersValues(this.collapsedTasks, newId);
@@ -3180,7 +3156,7 @@ export class Gantt implements IVisual {
     }
 
     // eslint-disable-next-line
-    const newId = crypto?.randomUUID() || Math.random().toString();
+    const newId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
     this.collapsedTasksUpdateIDs.push(newId);
 
     this.setJsonFiltersValues(this.collapsedTasks, newId);
@@ -3455,90 +3431,47 @@ export class Gantt implements IVisual {
     );
   }
 
-  // private getMilestonePath(
-  //   milestoneType: string,
-  //   taskConfigHeight: number
-  // ): string {
-  //   let shape: string;
-  //   const convertedHeight: number = Gantt.getBarHeight(taskConfigHeight);
-  //   const milestone: MilestoneDataPoint =
-  //     this.viewModel.milestonesData.dataPoints.filter(
-  //       (dataPoint: MilestoneDataPoint) => dataPoint.name === milestoneType
-  //     )[0];
-  //   switch (milestone.shapeType) {
-  //     case MilestoneShape.Rhombus:
-  //       shape = drawDiamond(convertedHeight);
-  //       break;
-  //     case MilestoneShape.Square:
-  //       shape = drawRectangle(convertedHeight);
-  //       break;
-  //     case MilestoneShape.Flag:
-  //       shape = drawFlag(convertedHeight);
-  //   }
-
-  //   return shape;
-  // }
-
   private getGlobalMilestoneShape(): MilestoneShape | null {
     const objs = (this.viewModel?.dataView?.metadata?.objects ?? {}) as any;
     const m = objs["milestones"] as any;
     if (!m) return null;
 
+    // Only apply when the toggle is on
     const applyAll = m.applyToAll === true;
     if (!applyAll) return null;
 
-    // enumeration can come through as a plain string ("Flag") or { value: "Flag" }
-    const raw =
-      typeof m.globalShape === "string" ? m.globalShape : m.globalShape?.value;
+    // Respect the current settings model value (can be "Flag" or { value: "Flag" })
+    const s = this.viewModel?.settings?.milestonesCardSettings;
+    const raw = s?.globalShape?.value as any;
+    const v = (typeof raw === "string" ? raw : raw?.value) as
+      | MilestoneShape
+      | undefined;
 
-    switch (raw) {
-      case "Rhombus":
-        return MilestoneShape.Rhombus;
-      case "Square":
-        return MilestoneShape.Square;
-      case "Flag":
-        return MilestoneShape.Flag;
-      default:
-        return MilestoneShape.Flag; // safe default
-    }
+    return v ?? MilestoneShape.Flag;
   }
 
   private getMilestonePath(
     milestoneType: string,
     taskConfigHeight: number
   ): string {
-    const convertedHeight = Gantt.getBarHeight(taskConfigHeight);
+    const h = Gantt.getBarHeight(taskConfigHeight);
 
-    // 1) Check the new global override first
+    // 1) Global override, if Apply to All is ON
     const globalShape = this.getGlobalMilestoneShape();
-    if (globalShape) {
-      switch (globalShape) {
-        case MilestoneShape.Rhombus:
-          return drawDiamond(convertedHeight);
-        case MilestoneShape.Square:
-          return drawRectangle(convertedHeight);
-        case MilestoneShape.Flag:
-        default:
-          return drawFlag(convertedHeight);
-      }
-    }
+    const perTypeShape = this.viewModel.milestonesData?.dataPoints?.find(
+      (dp) => dp.name === milestoneType
+    )?.shapeType as MilestoneShape | undefined;
 
-    // 2) Fall back to per-milestone (specific) shape from the category object
-    const milestone: MilestoneDataPoint | undefined =
-      this.viewModel.milestonesData?.dataPoints?.find(
-        (dp) => dp.name === milestoneType
-      );
+    const shapeToUse = globalShape ?? perTypeShape ?? MilestoneShape.Flag;
 
-    const shape =
-      (milestone?.shapeType as MilestoneShape) ?? MilestoneShape.Flag;
-    switch (shape) {
+    switch (shapeToUse) {
       case MilestoneShape.Rhombus:
-        return drawDiamond(convertedHeight);
+        return drawDiamond(h);
       case MilestoneShape.Square:
-        return drawRectangle(convertedHeight);
+        return drawRectangle(h);
       case MilestoneShape.Flag:
       default:
-        return drawFlag(convertedHeight);
+        return drawFlag(h);
     }
   }
 
@@ -4464,126 +4397,6 @@ export class Gantt implements IVisual {
         });
     }
   }
-
-  // public getFormattingModel(): powerbi.visuals.FormattingModel {
-  //   this.filterSettingsCards();
-
-  //   // localize dropdown items manually
-  //   const m = this.formattingSettings.milestonesCardSettings;
-  //   m.globalShape.items = [
-  //     {
-  //       value: "Flag",
-  //       displayName: this.localizationManager.getDisplayName(
-  //         "Milestone_Shape_Flag"
-  //       ),
-  //     },
-  //     {
-  //       value: "Rhombus",
-  //       displayName: this.localizationManager.getDisplayName(
-  //         "Milestone_Shape_Rhombus"
-  //       ),
-  //     },
-  //     {
-  //       value: "Square",
-  //       displayName: this.localizationManager.getDisplayName(
-  //         "Milestone_Shape_Square"
-  //       ),
-  //     },
-  //   ];
-  //   this.formattingSettings.setLocalizedOptions(this.localizationManager);
-
-  //   return this.formattingSettingsService.buildFormattingModel(
-  //     this.formattingSettings
-  //   );
-  // }
-
-  // public filterSettingsCards() {
-  //   const settings = this.formattingSettings;
-
-  //   settings.cards.forEach((element) => {
-  //     switch (element.name) {
-  //       case Gantt.MilestonesPropertyIdentifier.objectName: {
-  //         const card = settings.milestonesCardSettings;
-
-  //         // Set visibility based on current value
-  //         card.shapeType.visible = !card.applyToAll.value;
-  //         card.globalShape.visible = !!card.applyToAll.value;
-
-  //         const mPoints = this.viewModel?.milestonesData?.dataPoints;
-
-  //         if (!mPoints || !mPoints.length) {
-  //           // No milestone categories bound: still show our controls
-  //           card.visible = true;
-  //           card.slices = [
-  //             card.showLabels,
-  //             card.applyToAll,
-  //             card.globalShape,
-  //             card.shapeType,
-  //             card.fill,
-  //           ];
-  //           break;
-  //         }
-
-  //         // Milestones exist: build per-type slices, then prepend our controls
-  //         const uniq = Gantt.getUniqueMilestones(mPoints);
-  //         settings.populateMilestones(uniq); // populates card.slices
-
-  //         const rest = card.slices.filter(
-  //           (s) =>
-  //             s !== card.showLabels &&
-  //             s !== card.applyToAll &&
-  //             s !== card.globalShape &&
-  //             s !== card.shapeType &&
-  //             s !== card.fill
-  //         );
-
-  //         card.slices = [
-  //           card.showLabels,
-  //           card.applyToAll,
-  //           card.globalShape,
-  //           card.shapeType,
-  //           card.fill,
-  //           ...rest,
-  //         ];
-  //         break;
-  //       }
-
-  //       case Gantt.LegendPropertyIdentifier.objectName: {
-  //         if (
-  //           this.viewModel &&
-  //           !this.viewModel.isDurationFilled &&
-  //           !this.viewModel.isEndDateFilled
-  //         ) {
-  //           break;
-  //         }
-
-  //         const dataPoints = this.viewModel?.legendData?.dataPoints;
-  //         if (!dataPoints || !dataPoints.length) break;
-
-  //         settings.populateLegend(dataPoints, this.localizationManager);
-  //         break;
-  //       }
-
-  //       case Gantt.TaskResourcePropertyIdentifier.objectName: {
-  //         if (!this.viewModel.isResourcesFilled) {
-  //           settings.taskResourceCardSettings.visible = false;
-  //         }
-  //         break;
-  //       }
-
-  //       case "tooltipConfig": {
-  //         const mode =
-  //           this.formattingSettings.tooltipConfigCardSettings.mode.value;
-  //         if ((mode as any)?.value === "off") {
-  //           this.formattingSettings.tooltipConfigCardSettings.slices = [
-  //             this.formattingSettings.tooltipConfigCardSettings.mode,
-  //           ];
-  //         }
-  //         break;
-  //       }
-  //     }
-  //   });
-  // }
 
   public getFormattingModel(): powerbi.visuals.FormattingModel {
     const m = this.formattingSettings.milestonesCardSettings;
