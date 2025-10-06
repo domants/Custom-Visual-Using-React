@@ -81,34 +81,13 @@
     {
       "conditions": [
         {
-          "Legend": {
-            "min": 0,
-            "max": 1
-          },
-          "Task": {
-            "min": 1,
-            "max": 1
-          },
-          "Parent": {
-            "min": 0,
-            "max": 1
-          },
-          "StartDate": {
-            "min": 0,
-            "max": 1
-          },
-          "EndDate": {
-            "min": 0,
-            "max": 1
-          },
-          "Duration": {
-            "min": 0,
-            "max": 0
-          },
-          "Completion": {
-            "min": 0,
-            "max": 0
-          },
+          "Legend": { "min": 0, "max": 1 },
+          "Task": { "min": 1, "max": 1 },
+          "Parent": { "min": 0, "max": 1 },
+          "StartDate": { "min": 0, "max": 1 },
+          "EndDate": { "min": 0, "max": 1 },
+          "Duration": { "min": 0, "max": 0 },
+          "Completion": { "min": 0, "max": 0 },
           "Resource": {
             "min": 0,
             "max": 0
@@ -485,6 +464,10 @@
               { "displayNameKey": "Milestone_Shape_Square", "value": "Square" }
             ]
           }
+        },
+        "useIcons": {
+          "displayNameKey": "Milestone_UseIcons",
+          "type": { "bool": true }
         }
       }
     },

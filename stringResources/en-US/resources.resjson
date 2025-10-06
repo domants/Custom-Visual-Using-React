@@ -46,12 +46,12 @@
   "Tooltip_Show_MilestoneName": "Show milestone name",
   "Tooltip_Show_MilestoneDate": "Show milestone date",
 
-  "Milestone_ApplyScope": "Apply To All?",
+  "Milestone_ApplyScope": "Apply To All",
   "Milestone_GlobalShape": "Milestone Shape",
   "Milestone_Shape_Flag": "Flag",
   "Milestone_Shape_Rhombus": "Rhombus",
   "Milestone_Shape_Square": "Square",
-
+  "Milestone_UseIcons": "Use Milestone Icon",
 
   "Visual_Milestone_ShowLabels": "Show Legend Text",
   "Visual_Position": "Position",

@@ -11,7 +11,5 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true
   },
-  "files": [
-    "src/gantt.ts"
-  ]
+  "files": ["src/gantt.ts"]
 }

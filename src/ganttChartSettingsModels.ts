@@ -316,52 +316,6 @@ export class LegendCardSettings extends Card {
   ];
 }
 
-// export class MilestonesCardSettings extends Card {
-//   fill = new formattingSettings.ColorPicker({
-//     name: "fill",
-//     displayNameKey: "Visual_Fill",
-//     value: { value: "#000000" },
-//   });
-
-//   shapeType = new formattingSettings.ItemDropdown({
-//     name: "shapeType",
-//     displayNameKey: "Visual_Shape",
-//     items: shapesOptions,
-//     value: shapesOptions[0],
-//   });
-
-//   showLabels = new formattingSettings.ToggleSwitch({
-//     name: "showLabels",
-//     displayNameKey: "Visual_Milestone_ShowLabels",
-//     value: true,
-//   });
-
-//   applyToAll = new formattingSettings.ToggleSwitch({
-//     name: "applyToAll",
-//     displayNameKey: "Milestone_ApplyScope",
-//     value: { value: false }, // default OFF
-//   });
-
-//   globalShape = new formattingSettings.ItemDropdown({
-//     name: "globalShape",
-//     displayNameKey: "Milestone_GlobalShape",
-//     items: [
-//       { displayNameKey: "Milestone_Shape_Flag", value: "Flag" },
-//       { displayNameKey: "Milestone_Shape_Rhombus", value: "Rhombus" },
-//       { displayNameKey: "Milestone_Shape_Square", value: "Square" },
-//     ],
-//     value: { value: "Flag" },
-//     // only show when toggle is ON
-//     visible: () => this.applyToAll.value === true,
-//   });
-
-//   name: string = "milestones";
-//   displayNameKey: string = "Visual_Milestones";
-//   slices = [this.showLabels]; // <- make it the default slice
-
-//   cards = [this.applyToAll, this.globalShape /* + your existing props */];
-// }
-
 export class MilestonesCardSettings extends Card {
   fill = new formattingSettings.ColorPicker({
     name: "fill",
@@ -372,10 +326,9 @@ export class MilestonesCardSettings extends Card {
   shapeType = new formattingSettings.ItemDropdown({
     name: "shapeType",
     displayNameKey: "Visual_Shape",
-    items: shapesOptions, // keeps your existing enum list
+    items: shapesOptions,
     value: shapesOptions[0],
-    // hide this picker when "apply to all" is ON
-    visible: true,
+    visible: true, // hidden dynamically when applyToAll is true
   });
 
   showLabels = new formattingSettings.ToggleSwitch({
@@ -390,30 +343,30 @@ export class MilestonesCardSettings extends Card {
     value: false,
   });
 
-  // globalShape = new formattingSettings.ItemDropdown({
-  //   name: "globalShape",
-  //   displayNameKey: "Milestone_GlobalShape",
-  //   items: [
-  //     { displayName: "Milestone_Shape_Flag", value: "Flag" },
-  //     { displayName: "Milestone_Shape_Rhombus", value: "Rhombus" },
-  //     { displayName: "Milestone_Shape_Square", value: "Square" },
-  //   ],
-  //   value: { displayName: "Milestone_Shape_Flag", value: "Flag" },
-  //   // show this picker only when "apply to all" is ON
-  //   visible: false,
-  // });
-
   globalShape = new formattingSettings.ItemDropdown({
     name: "globalShape",
     displayNameKey: "Milestone_GlobalShape",
-    items: [], // filled at runtime
-    value: { value: "Flag", displayNameKey: "Milestone_Shape_Flag" }, // added displayNameKey
+    items: [], // populated in getFormattingModel()
+    value: { value: "Flag", displayName: "Flag" },
     visible: false,
   });
 
-  name: string = "milestones";
-  displayNameKey: string = "Visual_Milestones";
-  slices: FormattingSettingsSlice[] = [this.showLabels, this.applyToAll]; // minimal default
+  // toggle between icons vs 1-day bars
+  useIcons = new formattingSettings.ToggleSwitch({
+    name: "useIcons",
+    displayNameKey: "Milestone_UseIcons",
+    value: true,
+  });
+
+  name = "milestones";
+  displayNameKey = "Visual_Milestones";
+
+  // default; filterSettingsCards() will re-compose this
+  slices: FormattingSettingsSlice[] = [
+    this.useIcons,
+    this.showLabels,
+    this.applyToAll,
+  ];
 }
 
 export class TaskLabelsCardSettings extends Card {

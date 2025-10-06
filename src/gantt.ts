@@ -2104,6 +2104,44 @@ export class Gantt implements IVisual {
     };
   }
 
+  // public parseSettings(
+  //   dataView: DataView,
+  //   colorHelper: ColorHelper
+  // ): GanttChartSettingsModel {
+  //   this.formattingSettings =
+  //     this.formattingSettingsService.populateFormattingSettingsModel(
+  //       GanttChartSettingsModel,
+  //       dataView
+  //     );
+  //   const settings: GanttChartSettingsModel = this.formattingSettings;
+
+  //   const objs = (dataView?.metadata?.objects ?? {}) as any;
+  //   const m = objs["milestones"] as any;
+
+  //   const applyAllFromHost: boolean = !!m?.applyToAll;
+  //   settings.milestonesCardSettings.applyToAll.value = applyAllFromHost;
+
+  //   const shapeFromHost = normalizeEnum(m?.globalShape, MilestoneShape.Flag, [
+  //     MilestoneShape.Flag,
+  //     MilestoneShape.Rhombus,
+  //     MilestoneShape.Square,
+  //   ] as const);
+
+  //   settings.milestonesCardSettings.globalShape.value = {
+  //     displayNameKey: "Visual_Milestone_Shape",
+  //     value: shapeFromHost,
+  //   };
+
+  //   // Optional: show/hide the dropdown based on Apply to All
+  //   settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
+
+  //   // (keep your existing high-contrast logic, etc.)
+  //   if (colorHelper) {
+  //     // ... your existing high-contrast code ...
+  //   }
+  //   return settings;
+  // }
+
   public parseSettings(
     dataView: DataView,
     colorHelper: ColorHelper
@@ -2113,9 +2151,9 @@ export class Gantt implements IVisual {
         GanttChartSettingsModel,
         dataView
       );
+
     const settings: GanttChartSettingsModel = this.formattingSettings;
 
-    // 🔽 NEW: Keep Milestones Apply-to-All + Global Shape in sync with metadata
     const objs = (dataView?.metadata?.objects ?? {}) as any;
     const m = objs["milestones"] as any;
 
@@ -2127,20 +2165,37 @@ export class Gantt implements IVisual {
       MilestoneShape.Rhombus,
       MilestoneShape.Square,
     ] as const);
-
     settings.milestonesCardSettings.globalShape.value = {
       displayNameKey: "Visual_Milestone_Shape",
       value: shapeFromHost,
     };
-
-    // Optional: show/hide the dropdown based on Apply to All
     settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
 
-    // (keep your existing high-contrast logic, etc.)
+    //pull the toggle from host if present
+    if (typeof m?.useIcons === "boolean") {
+      settings.milestonesCardSettings.useIcons.value = m.useIcons;
+    }
+
     if (colorHelper) {
-      // ... your existing high-contrast code ...
+      // existing high-contrast logic
     }
     return settings;
+  }
+
+  private static _uid = 0;
+
+  // ✅ No Math.random fallback; uses counter+timestamp if crypto is missing
+  private static newUpdateId(): string {
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+      const bytes = new Uint8Array(8);
+      crypto.getRandomValues(bytes);
+      const rand = Array.from(bytes)
+        .map((b) => b.toString(36))
+        .join("");
+      return `${Date.now()}_${rand}`;
+    }
+    // deterministic & ESLint-safe
+    return `${Date.now()}_${Gantt._uid++}`;
   }
 
   private static convertToDecimal(
@@ -3066,12 +3121,15 @@ export class Gantt implements IVisual {
     });
 
     // eslint-disable-next-line
-    const newId = `${Date.now()}_${Array.from(
-      crypto.getRandomValues(new Uint8Array(8))
-    )
-      .map((b) => b.toString(36))
-      .join("")}`;
+    // const newId = `${Date.now()}_${Array.from(
+    //   crypto.getRandomValues(new Uint8Array(8))
+    // )
+    //   .map((b) => b.toString(36))
+    //   .join("")}`;
+
+    const newId = Gantt.newUpdateId();
     this.collapsedTasksUpdateIDs.push(newId);
+    this.setJsonFiltersValues(this.collapsedTasks, newId);
 
     this.setJsonFiltersValues(this.collapsedTasks, newId);
   }
@@ -3108,14 +3166,15 @@ export class Gantt implements IVisual {
       drawExpandButton(collapsedAllSelector, buttonColor);
     }
 
-    // stable id; no crypto dependency
     // eslint-disable-next-line
-    const newId = `${Date.now()}_${Array.from(
-      crypto.getRandomValues(new Uint8Array(8))
-    )
-      .map((b) => b.toString(36))
-      .join("")}`;
+    // const newId = `${Date.now()}_${Array.from(
+    //   crypto.getRandomValues(new Uint8Array(8))
+    // )
+    //   .map((b) => b.toString(36))
+    //   .join("")}`;
+    const newId = Gantt.newUpdateId();
     this.collapsedTasksUpdateIDs.push(newId);
+    this.setJsonFiltersValues(this.collapsedTasks, newId);
     this.setJsonFiltersValues(this.collapsedTasks, newId);
   }
 
@@ -3177,7 +3236,19 @@ export class Gantt implements IVisual {
       taskConfigHeight,
       generalBarsRoundedCorners
     );
-    this.MilestonesRender(taskSelection, taskConfigHeight);
+
+    // Always clear whichever mode was drawn last time:
+    taskSelection.selectAll(Gantt.TaskMilestone.selectorName).remove(); // icon mode container(s)
+    taskSelection.selectAll("path.milestone-as-bar").remove(); // bar mode elements
+
+    const useIcons =
+      !!this.viewModel.settings.milestonesCardSettings.useIcons.value;
+    if (useIcons) {
+      this.MilestonesRender(taskSelection, taskConfigHeight);
+    } else {
+      this.MilestonesAsBarsRender(taskSelection, taskConfigHeight);
+    }
+
     this.taskProgressRender(taskSelection);
     this.taskDaysOffRender(taskSelection, taskConfigHeight);
     this.taskResourceRender(taskSelection, taskConfigHeight);
@@ -3371,6 +3442,62 @@ export class Gantt implements IVisual {
     }
 
     taskRect.exit().remove();
+  }
+
+  // Draw 1-day bars for milestones, with tooltips, square corners
+  private MilestonesAsBarsRender(
+    taskSelection: Selection<Task>,
+    taskConfigHeight: number
+  ): void {
+    const sel = taskSelection
+      .selectAll<SVGPathElement, MilestonePath>("path.milestone-as-bar")
+      .data((task: Task) => {
+        const ms = Array.isArray(task.Milestones) ? task.Milestones : [];
+        // project each Milestone -> MilestonePath for typing & tooltips
+        return ms.map(
+          (m) =>
+            ({
+              type: m.type,
+              start: m.start,
+              taskID: task.index,
+              tooltipInfo: m.tooltipInfo,
+              color: this.getMilestoneColor(m.type),
+              label: task.taskType || "",
+            } as MilestonePath)
+        );
+      });
+
+    sel.exit().remove();
+
+    const merged = sel
+      .enter()
+      .append("path")
+      .classed("milestone-as-bar", true)
+      .merge(sel as any);
+
+    if (!this.hasNotNullableDates) return;
+
+    merged
+      .attr("d", (m: MilestonePath) => {
+        const { start, end } = Gantt.daySpan(m.start);
+        const x = Gantt.TimeScale(start);
+        const w = Gantt.taskDurationToWidth(start, end);
+        const row = m.taskID ?? 0;
+        const y =
+          Gantt.getBarYCoordinate(row, taskConfigHeight) +
+          (row + 1) * this.getResourceLabelTopMargin();
+        const h = Gantt.getBarHeight(taskConfigHeight);
+        return drawNotRoundedRectByPath(x, y, w, h);
+      })
+      .style("fill", (m: MilestonePath) =>
+        this.colorHelper.getHighContrastColor(
+          "foreground",
+          m.color || this.getMilestoneColor(m.type)
+        )
+      );
+
+    // tooltips now match the expected type
+    this.renderTooltip(merged);
   }
 
   /**
@@ -4130,6 +4257,21 @@ export class Gantt implements IVisual {
     return Gantt.TimeScale(end) - Gantt.TimeScale(start);
   }
 
+  private static daySpan(date: Date): { start: Date; end: Date } {
+    // normalize to 00:00:00 local
+    const start = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
+    const end = Gantt.getEndDate(DurationUnit.Day, start, 1); // next day, no gaps
+    return { start, end };
+  }
+
   private static getTooltipForMilestoneLine(
     formattedDate: string,
     localizationManager: ILocalizationManager,
@@ -4359,6 +4501,7 @@ export class Gantt implements IVisual {
     const m = this.formattingSettings.milestonesCardSettings;
 
     // Localize globalShape dropdown items
+
     const items = [
       {
         value: "Flag",
@@ -4399,25 +4542,24 @@ export class Gantt implements IVisual {
       switch (element.name) {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
+
           const isAll = !!card.applyToAll.value;
 
           const mPoints = this.viewModel?.milestonesData?.dataPoints;
-          card.slices = []; // start clean
-          card.shapeType.visible = false; // never show the base "Shape"
-          card.globalShape.visible = isAll; // harmless; slices drive what shows
+          card.slices = []; // reset
+          card.shapeType.visible = false;
+          card.globalShape.visible = isAll;
 
-          // No milestone categories: only show toggle and (if ON) the global picklist
           if (!mPoints || !mPoints.length) {
-            card.slices.push(card.showLabels, card.applyToAll);
+            // ❗ Include useIcons here too
+            card.slices.push(card.useIcons, card.showLabels, card.applyToAll);
             if (isAll) card.slices.push(card.globalShape);
             break;
           }
 
-          // We have categories — build the per-type controls
           const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq); // mutates card.slices with per-type items
+          settings.populateMilestones(uniq);
 
-          // Pull out the per-type slices (everything except the top-level ones)
           const top = new Set([
             card.showLabels,
             card.applyToAll,
@@ -4427,11 +4569,15 @@ export class Gantt implements IVisual {
           ]);
           const perType = card.slices.filter((s) => !top.has(s));
 
-          // Recompose slices based on the toggle:
+          // ✅ Keep useIcons in both compositions
           card.slices = isAll
-            ? [card.showLabels, card.applyToAll, card.globalShape] // ONLY global picklist
-            : [card.showLabels, card.applyToAll, ...perType]; // per-type controls
-
+            ? [
+                card.useIcons,
+                card.showLabels,
+                card.applyToAll,
+                card.globalShape,
+              ]
+            : [card.useIcons, card.showLabels, card.applyToAll, ...perType];
           break;
         }
 
