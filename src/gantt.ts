@@ -1335,59 +1335,6 @@ export class Gantt implements IVisual {
     }
   }
 
-  // private static addTooltipInfoForTasks(
-  //   tasks: Task[],
-  //   formatters: GanttChartFormatters,
-  //   durationUnit: DurationUnit,
-  //   localizationManager: powerbi.extensibility.ILocalizationManager,
-  //   isEndDateFilled: boolean,
-  //   settings: GanttChartSettingsModel
-  // ): void {
-  //   if (!Array.isArray(tasks) || !formatters) {
-  //     return;
-  //   }
-
-  //   const legendTitle =
-  //     settings?.legendCardSettings?.titleText?.value || undefined;
-  //   const dateTypesSettings = settings?.dateTypeCardSettings;
-
-  //   for (const task of tasks) {
-  //     // Task tooltip
-  //     task.tooltipInfo = SHOW_DEFAULT_TOOLTIPS
-  //       ? Gantt.getTooltipInfo(
-  //           task,
-  //           formatters,
-  //           durationUnit,
-  //           localizationManager,
-  //           isEndDateFilled,
-  //           legendTitle
-  //         )
-  //       : [];
-
-  //     // Milestones tooltip (if any)
-  //     const milestones = Array.isArray(task.Milestones) ? task.Milestones : [];
-  //     for (const m of milestones) {
-  //       // Guard against bad dates
-  //       const dateToFormat =
-  //         m?.start instanceof Date && !isNaN(m.start.getTime())
-  //           ? m.start
-  //           : undefined;
-
-  //       const dateFormatted = dateToFormat
-  //         ? formatters.startDateFormatter.format(dateToFormat)
-  //         : "";
-
-  //       m.tooltipInfo = Gantt.getTooltipForMilestoneLine(
-  //         dateFormatted,
-  //         localizationManager,
-  //         dateTypesSettings,
-  //         [m?.type], // milestone title
-  //         [m?.category] // optional “Milestone Name” row
-  //       );
-  //     }
-  //   }
-  // }
-
   private static createTask(
     values: GanttColumns<any>,
     index: number,
@@ -2331,7 +2278,6 @@ export class Gantt implements IVisual {
       this.collapsedTasksUpdateIDs = this.collapsedTasksUpdateIDs.filter(
         (id) => id !== collapsedTasksUpdateId
       );
-      return;
     }
 
     this.updateInternal(options);
@@ -3104,22 +3050,27 @@ export class Gantt implements IVisual {
       taskClicked.tasks[0].parent || taskClicked.tasks[0].name;
     this.viewModel.tasks.forEach((task: Task) => {
       if (
-        task.parent === taskClickedParent &&
-        task.parent.length >= taskClickedParent.length
+        task.parent === taskClickedParent ||
+        (task.parent && task.parent.startsWith(taskClickedParent))
       ) {
-        const index: number = this.collapsedTasks.indexOf(task.parent);
+        const idx = this.collapsedTasks.indexOf(task.parent);
+
         if (task.visibility) {
-          this.collapsedTasks.push(task.parent);
+          if (idx === -1) this.collapsedTasks.push(task.parent);
         } else {
-          if (taskClickedParent === task.parent) {
-            this.collapsedTasks.splice(index, 1);
+          if (taskClickedParent === task.parent && idx !== -1) {
+            this.collapsedTasks.splice(idx, 1);
           }
         }
       }
     });
 
     // eslint-disable-next-line
-    const newId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const newId = `${Date.now()}_${Array.from(
+      crypto.getRandomValues(new Uint8Array(8))
+    )
+      .map((b) => b.toString(36))
+      .join("")}`;
     this.collapsedTasksUpdateIDs.push(newId);
 
     this.setJsonFiltersValues(this.collapsedTasks, newId);
@@ -3133,32 +3084,38 @@ export class Gantt implements IVisual {
       Gantt.CollapseAllArrow.selectorName
     );
     const isCollapsed: string = collapsedAllSelector.attr(this.collapseAllFlag);
-    const buttonExpandCollapseColor = this.colorHelper.getHighContrastColor(
+    const buttonColor = this.colorHelper.getHighContrastColor(
       "foreground",
       Gantt.DefaultValues.CollapseAllColor
     );
 
     collapsedAllSelector.selectAll("path").remove();
+
     if (isCollapsed === "1") {
+      // expand all
       this.collapsedTasks = [];
       collapsedAllSelector.attr(this.collapseAllFlag, "0");
-      drawCollapseButton(collapsedAllSelector, buttonExpandCollapseColor);
+      drawCollapseButton(collapsedAllSelector, buttonColor);
     } else {
-      collapsedAllSelector.attr(this.collapseAllFlag, "1");
-      drawExpandButton(collapsedAllSelector, buttonExpandCollapseColor);
-      this.viewModel.tasks.forEach((task: Task) => {
-        if (task.parent) {
-          if (task.visibility) {
-            this.collapsedTasks.push(task.parent);
-          }
-        }
+      // collapse all (unique parents only)
+      const set = new Set<string>(this.collapsedTasks);
+      this.viewModel.tasks.forEach((t: Task) => {
+        if (t.parent && t.visibility) set.add(t.parent);
       });
+      this.collapsedTasks = Array.from(set);
+
+      collapsedAllSelector.attr(this.collapseAllFlag, "1");
+      drawExpandButton(collapsedAllSelector, buttonColor);
     }
 
+    // stable id; no crypto dependency
     // eslint-disable-next-line
-    const newId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const newId = `${Date.now()}_${Array.from(
+      crypto.getRandomValues(new Uint8Array(8))
+    )
+      .map((b) => b.toString(36))
+      .join("")}`;
     this.collapsedTasksUpdateIDs.push(newId);
-
     this.setJsonFiltersValues(this.collapsedTasks, newId);
   }
 
