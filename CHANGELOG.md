@@ -1,6 +1,15 @@
-## 1.0.5
+## 1.0.0.1
 
-- added option to control tooltips
+- Added a "Use Milestone Icon" toggle: when turned off, each milestone is rendered as a 1-day, full-height bar with no gaps; when turned on, it uses the default milestone icon.
+- When the "Use Milestone Icon" toggle is turned off, it hides both the "Show Legend Text" toggle and the "Apply to All" toggle.
+
+## 1.0.0.0
+
+- added options to control tooltip
+- Added milestone icon flag (pennant)
+- Option to display legend text next to the milestone icon
+- Ability to apply milestone icon to all occurrences
+- Option to change tooltip mode (All, Dates only, Off)
 
 ## 3.0.11
 

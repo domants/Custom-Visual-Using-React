@@ -4543,24 +4543,40 @@ export class Gantt implements IVisual {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
 
+          const useIcons = !!card.useIcons.value; // the toggle
           const isAll = !!card.applyToAll.value;
 
-          const mPoints = this.viewModel?.milestonesData?.dataPoints;
-          card.slices = []; // reset
+          // default: hide shape pickers until we decide to show them
           card.shapeType.visible = false;
-          card.globalShape.visible = isAll;
+          card.globalShape.visible = false;
 
-          if (!mPoints || !mPoints.length) {
-            // ❗ Include useIcons here too
-            card.slices.push(card.useIcons, card.showLabels, card.applyToAll);
-            if (isAll) card.slices.push(card.globalShape);
+          // If icons are OFF → hide Show Labels + Apply to all (and any per-type controls)
+          if (!useIcons) {
+            card.slices = [card.useIcons]; // only show the master toggle
             break;
           }
 
-          const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq);
+          // Icons are ON → show Show Labels and either "Apply to all + Global shape"
+          // or the per-type controls, as you had before.
+          const mPoints = this.viewModel?.milestonesData?.dataPoints;
 
+          if (!mPoints?.length) {
+            // no categories → only global options
+            card.slices = [card.useIcons, card.showLabels, card.applyToAll];
+            if (isAll) {
+              card.globalShape.visible = true;
+              card.slices.push(card.globalShape);
+            }
+            break;
+          }
+
+          // categories exist → build per-type controls
+          const uniq = Gantt.getUniqueMilestones(mPoints);
+          settings.populateMilestones(uniq); // adds per-type slices to card.slices
+
+          // Pull out per-type slices (everything not in the “top” set)
           const top = new Set([
+            card.useIcons,
             card.showLabels,
             card.applyToAll,
             card.globalShape,
@@ -4569,15 +4585,16 @@ export class Gantt implements IVisual {
           ]);
           const perType = card.slices.filter((s) => !top.has(s));
 
-          // ✅ Keep useIcons in both compositions
+          // Recompose slices depending on Apply to all
           card.slices = isAll
             ? [
                 card.useIcons,
                 card.showLabels,
                 card.applyToAll,
-                card.globalShape,
+                ((card.globalShape.visible = true), card.globalShape),
               ]
             : [card.useIcons, card.showLabels, card.applyToAll, ...perType];
+
           break;
         }
 
