@@ -480,6 +480,10 @@
         "showResourceOnBars": {
           "displayNameKey": "Milestone_ShowResourceOnBars",
           "type": { "bool": true }
+        },
+        "resourceInitialOnly": {
+          "displayNameKey": "Visual_Milestone_ResourceInitialOnly",
+          "type": { "bool": true }
         }
       }
     },

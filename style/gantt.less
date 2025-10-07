@@ -112,3 +112,18 @@ text.milestone-legend {
   display: block; // show/hide text label next to icon
   padding-left: 12px;
 }
+
+/* Text next to icon when Use Milestone Icon = OFF (1-day bars) */
+.gantt .task text.milestone-resource {
+  transform: translateX(-5px);
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  fill: #ffffff !important;
+}
+
+/* Text next to icon when Use Milestone Icon = ON */
+.gantt .task text.milestone-legend {
+  transform: translateX(-25px);
+  font-size: 13px !important;
+  fill: #bd1818 !important;
+}

@@ -6,6 +6,9 @@
   - When _OFF_, each milestone is rendered as a `1-day milestone bar` (Midnight-Midnight), full-height bar with no gaps.
   - When _ON_, it uses the default milestone icon with option to change the icon (Flag, Rhombus, Square).
 - When `Use Milestone Icon` is _OFF_, the `Show Legend Text`,`Apply to All` and `Milestone Shape` toggles are hidden.
+- Added a toggle to display text resource for milestone bar type
+- toggle to show resource initial only (Milestone Text)
+- override the style in css for milestone text only
 
 ## 1.0.0.0
 

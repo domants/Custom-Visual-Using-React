@@ -864,6 +864,9 @@ export class Gantt implements IVisual {
     );
   }
 
+  private _prevInitialsOnly?: boolean;
+  private _prevResourcePos?: ResourceLabelPosition;
+
   private static getSortingOptions(dataView: DataView): SortingOptions {
     const sortingOption: SortingOptions = new SortingOptions();
 
@@ -3186,25 +3189,21 @@ export class Gantt implements IVisual {
    * @param groupedTasks Grouped tasks
    */
 
-  // Renders resource labels for 1-day milestone bars when Use Icons = OFF
-  private MilestoneBarResourcesRender(
-    taskSelection: Selection<Task>,
-    taskConfigHeight: number
-  ): void {
+  private getMsResConfig(taskConfigHeight: number) {
     const isBarMode =
       !this.viewModel.settings.milestonesCardSettings.useIcons.value;
-
     const showResourceOnBars =
       !!this.viewModel.settings.milestonesCardSettings.showResourceOnBars.value;
-
     const showResourcesGlobally =
       this.viewModel.isResourcesFilled &&
       this.viewModel.settings.taskResourceCardSettings.show.value;
 
-    if (!isBarMode || !showResourcesGlobally || !showResourceOnBars) {
-      taskSelection.selectAll("text.milestone-resource").remove();
-      return;
-    }
+    const initialsOnly =
+      !!this.viewModel.settings.milestonesCardSettings.resourceInitialOnly
+        ?.value;
+
+    const pos = this.viewModel.settings.taskResourceCardSettings.position.value
+      .value as ResourceLabelPosition;
 
     const fontPt =
       this.viewModel.settings.taskResourceCardSettings.fontSize.value;
@@ -3212,17 +3211,72 @@ export class Gantt implements IVisual {
     const fillColor =
       this.viewModel.settings.taskResourceCardSettings.fill.value.value;
 
-    const pos = this.viewModel.settings.taskResourceCardSettings.position.value
-      .value as ResourceLabelPosition;
-
-    const fullText =
-      this.viewModel.settings.taskResourceCardSettings.fullText.value;
-
-    const barH = Gantt.getBarHeight(taskConfigHeight);
     const defaultClipWidth =
       Gantt.DefaultValues.ResourceWidth - Gantt.ResourceWidthPadding;
 
-    // helper: X coordinate following your existing positioning rules
+    return {
+      shouldRender: isBarMode && showResourcesGlobally && showResourceOnBars,
+      initialsOnly,
+      pos,
+      fontPt,
+      fontPx,
+      fillColor,
+      defaultClipWidth,
+      taskConfigHeight,
+    };
+  }
+
+  private bindMsResNodes(taskSelection: Selection<Task>) {
+    const resSel = taskSelection
+      .selectAll<SVGTextElement, any>("text.milestone-resource")
+      .data(
+        (task: Task) => {
+          if (
+            !task?.resource ||
+            !Array.isArray(task.Milestones) ||
+            !task.Milestones.length
+          )
+            return [];
+          return task.Milestones.map((m) => {
+            const { start, end } = Gantt.daySpan(m.start);
+            return { row: task.index, start, end, resource: task.resource };
+          });
+        },
+        // stable key: row + ISO day
+        (d: any) =>
+          `${d?.row ?? "r"}-${
+            d?.start instanceof Date
+              ? d.start.toISOString().slice(0, 10)
+              : d?.start
+          }`
+      );
+
+    resSel.exit().remove();
+
+    const resEnter = resSel
+      .enter()
+      .append("text")
+      .classed("milestone-resource", true);
+    const merged = resEnter.merge(resSel as any);
+    return { resSel, merged };
+  }
+
+  private resetClipAttrs(merged: Selection<any>) {
+    merged
+      .attr("textLength", null)
+      .attr("lengthAdjust", null)
+      .selectAll("title")
+      .remove();
+  }
+
+  private getMsResPositioners(cfg: {
+    pos: ResourceLabelPosition;
+    fontPx: number;
+    fontPt: number;
+    taskConfigHeight: number;
+  }) {
+    const { pos, fontPx, taskConfigHeight } = cfg;
+
     const xForMilestone = (start: Date, end: Date): number => {
       switch (pos) {
         case ResourceLabelPosition.Right:
@@ -3251,80 +3305,108 @@ export class Gantt implements IVisual {
       }
     };
 
-    const yForMilestone = (row: number): number => {
-      return (
-        Gantt.getBarYCoordinate(row, taskConfigHeight) +
-        Gantt.getResourceLabelYOffset(taskConfigHeight, fontPt, pos) +
-        (row + 1) * this.getResourceLabelTopMargin()
-      );
-    };
+    const yForMilestone = (row: number): number =>
+      Gantt.getBarYCoordinate(row, taskConfigHeight) +
+      Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, pos) +
+      (row + 1) * this.getResourceLabelTopMargin();
 
-    // Data-bind one <text> per milestone (per task) when the task has resource
-    const resSel = taskSelection
-      .selectAll<SVGTextElement, any>("text.milestone-resource")
-      .data((task: Task) => {
-        if (
-          !task?.resource ||
-          !Array.isArray(task.Milestones) ||
-          !task.Milestones.length
-        ) {
-          return [];
-        }
-        return task.Milestones.map((m) => {
-          const { start, end } = Gantt.daySpan(m.start);
-          return {
-            row: task.index,
-            start,
-            end,
-            resource: task.resource,
-          };
-        });
-      });
+    return { xForMilestone, yForMilestone };
+  }
 
-    resSel.exit().remove();
-
-    const resEnter = resSel
-      .enter()
-      .append("text")
-      .classed("milestone-resource", true);
-    const merged = resEnter.merge(resSel as any);
-
-    // position + style
+  private styleAndTextMsRes(
+    merged: Selection<any>,
+    cfg: {
+      pos: ResourceLabelPosition;
+      fontPt: number;
+      fillColor: string;
+      initialsOnly: boolean;
+    },
+    xForMilestone: (s: Date, e: Date) => number,
+    yForMilestone: (row: number) => number
+  ) {
     merged
       .attr("x", (d: any) => xForMilestone(d.start, d.end))
       .attr("y", (d: any) => yForMilestone(d.row))
-      .text((d: any) => d.resource || "")
-      .style("fill", fillColor)
-      .style("font-size", PixelConverter.fromPoint(fontPt))
+      .attr(
+        "text-anchor",
+        cfg.pos === ResourceLabelPosition.Inside ? "middle" : "start"
+      )
+      .style("fill", cfg.fillColor)
+      .style("font-size", PixelConverter.fromPoint(cfg.fontPt))
       .style(
         "alignment-baseline",
-        pos === ResourceLabelPosition.Inside ? "central" : "auto"
-      );
+        cfg.pos === ResourceLabelPosition.Inside ? "central" : "auto"
+      )
+      .text((d: any) => {
+        const txt = (d.resource || "").trim();
+        return cfg.initialsOnly ? (txt ? txt[0] : "") : txt;
+      });
+  }
 
-    // clipping:
-    // - Inside: clip to the milestone bar width
-    // - Grouped rows: keep your existing behavior (we can keep it simple here)
-    if (!fullText) {
+  private clipMsResIfNeeded(
+    merged: Selection<any>,
+    cfg: {
+      initialsOnly: boolean;
+      pos: ResourceLabelPosition;
+      defaultClipWidth: number;
+    }
+  ) {
+    if (cfg.initialsOnly) return; // 1 char -> no clip
+
+    if (cfg.pos === ResourceLabelPosition.Inside) {
       merged.each((d: any, i, nodes) => {
         const node = d3Select(nodes[i]);
-        if (pos === ResourceLabelPosition.Inside) {
-          const w = this.hasNotNullableDates
-            ? Gantt.taskDurationToWidth(d.start, d.end)
-            : 0;
-          AxisHelper.LabelLayoutStrategy.clip(
-            node,
-            Math.max(0, w - 4), // tiny padding
-            textMeasurementService.svgEllipsis
-          );
-        } else {
-          AxisHelper.LabelLayoutStrategy.clip(
-            node,
-            defaultClipWidth,
-            textMeasurementService.svgEllipsis
-          );
-        }
+        const w = this.hasNotNullableDates
+          ? Gantt.taskDurationToWidth(d.start, d.end)
+          : 0;
+        AxisHelper.LabelLayoutStrategy.clip(
+          node,
+          Math.max(0, w - 4),
+          textMeasurementService.svgEllipsis
+        );
+      });
+    } else {
+      merged.each(function () {
+        AxisHelper.LabelLayoutStrategy.clip(
+          d3Select(this),
+          cfg.defaultClipWidth,
+          textMeasurementService.svgEllipsis
+        );
       });
     }
+  }
+
+  // Renders resource labels for 1-day milestone bars when Use Icons = OFF
+  private MilestoneBarResourcesRender(
+    taskSelection: Selection<Task>,
+    taskConfigHeight: number
+  ): void {
+    const cfg = this.getMsResConfig(taskConfigHeight);
+    if (!cfg.shouldRender) {
+      taskSelection.selectAll("text.milestone-resource").remove();
+      this._prevInitialsOnly = cfg.initialsOnly;
+      this._prevResourcePos = cfg.pos;
+      return;
+    }
+
+    // Clear stale nodes when toggles/pos changed
+    if (
+      this._prevInitialsOnly !== cfg.initialsOnly ||
+      this._prevResourcePos !== cfg.pos
+    ) {
+      taskSelection.selectAll("text.milestone-resource").remove();
+    }
+    this._prevInitialsOnly = cfg.initialsOnly;
+    this._prevResourcePos = cfg.pos;
+    const { merged } = this.bindMsResNodes(taskSelection);
+    this.resetClipAttrs(merged);
+
+    const { xForMilestone, yForMilestone } = this.getMsResPositioners({
+      ...cfg,
+      fontPt: cfg.fontPt,
+    });
+    this.styleAndTextMsRes(merged, cfg, xForMilestone, yForMilestone);
+    this.clipMsResIfNeeded(merged, cfg);
   }
 
   private renderTasks(groupedTasks: GroupedTask[]): void {
@@ -4704,36 +4786,36 @@ export class Gantt implements IVisual {
       switch (element.name) {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
-
           const useIcons = !!card.useIcons.value;
           const isAll = !!card.applyToAll.value;
 
-          // default: hide granular controls
+          // default hide granular shape controls until decided below
           card.shapeType.visible = false;
           card.globalShape.visible = false;
 
           if (!useIcons) {
-            // BAR MODE: hide icon-only controls
-            card.showLabels.visible = false;
+            // BAR MODE (Use Milestone Icon = OFF): show only bar-relevant toggles
+            card.showLabels.visible = false; // labels apply to icon mode only
             card.applyToAll.visible = false;
             card.globalShape.visible = false;
             card.shapeType.visible = false;
             card.fill.visible = false;
 
-            // only show bar-mode relevant toggles
+            // ⬇ include the new toggle "resourceInitialOnly"
             card.slices = [
               card.useIcons,
               card.roundedBars,
               card.useLegendColorForBars,
-              card.showResourceOnBars, // if you added this
+              card.showResourceOnBars,
+              card.resourceInitialOnly,
             ];
             break;
           }
 
-          // ICON MODE
-          card.showLabels.visible = true; // <— show only in icon mode
-          const mPoints = this.viewModel?.milestonesData?.dataPoints;
+          // ICON MODE (Use Milestone Icon = ON)
+          card.showLabels.visible = true;
 
+          const mPoints = this.viewModel?.milestonesData?.dataPoints;
           if (!mPoints?.length) {
             card.slices = [card.useIcons, card.showLabels, card.applyToAll];
             if (isAll) {

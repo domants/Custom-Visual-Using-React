@@ -329,7 +329,7 @@ export class MilestonesCardSettings extends Card {
     displayNameKey: "Visual_Shape",
     items: shapesOptions,
     value: shapesOptions[0],
-    visible: true, // hidden dynamically when applyToAll is true
+    visible: true, // visibility can be overridden in filterSettingsCards
   });
 
   showLabels = new formattingSettings.ToggleSwitch({
@@ -346,47 +346,58 @@ export class MilestonesCardSettings extends Card {
 
   globalShape = new formattingSettings.ItemDropdown({
     name: "globalShape",
-    displayNameKey: "Milestone_GlobalShape",
-    items: [], // populated in getFormattingModel()
-    value: { value: "Flag", displayName: "Flag" },
-    visible: false,
+    displayNameKey: "Visual_Milestone_Shape",
+    items: shapesOptions,
+    value: shapesOptions[0],
+    visible: false, // visibility can be overridden in filterSettingsCards
   });
 
-  // toggle between icons vs 1-day bars
   useIcons = new formattingSettings.ToggleSwitch({
     name: "useIcons",
-    displayNameKey: "Milestone_UseIcons",
+    displayNameKey: "Visual_Milestone_UseIcons",
     value: true,
   });
 
   roundedBars = new formattingSettings.ToggleSwitch({
     name: "roundedBars",
-    displayNameKey: "Milestone_RoundedBars",
+    displayNameKey: "Visual_Milestone_RoundedBars",
     value: true,
   });
 
   useLegendColorForBars = new formattingSettings.ToggleSwitch({
     name: "useLegendColorForBars",
-    displayNameKey: "Milestone_UseLegendColorForBars",
+    displayNameKey: "Visual_Milestone_UseLegendColorForBars",
     value: false,
   });
 
   showResourceOnBars = new formattingSettings.ToggleSwitch({
     name: "showResourceOnBars",
-    displayNameKey: "Milestone_ShowResourceOnBars",
-    value: false, // default hidden
+    displayNameKey: "Visual_Milestone_ShowResourceOnBars",
+    value: true,
   });
 
-  // default; filterSettingsCards() will re-compose this
-  slices: FormattingSettingsSlice[] = [
-    this.useIcons,
+  resourceInitialOnly = new formattingSettings.ToggleSwitch({
+    name: "resourceInitialOnly",
+    displayNameKey: "Visual_Milestone_ResourceInitialOnly",
+    value: false,
+  });
+
+  name: string = "milestones";
+  displayNameKey: string = "Visual_Milestones";
+
+  // IMPORTANT: include the new toggle here so the formatting service binds it
+  slices = [
+    this.fill,
+    this.shapeType,
     this.showLabels,
     this.applyToAll,
+    this.globalShape,
+    this.useIcons,
+    this.roundedBars,
     this.useLegendColorForBars,
+    this.showResourceOnBars,
+    this.resourceInitialOnly, // <- make sure this is present
   ];
-
-  name = "milestones";
-  displayNameKey = "Visual_Milestones";
 }
 
 export class TaskLabelsCardSettings extends Card {
