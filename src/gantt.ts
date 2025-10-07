@@ -321,6 +321,14 @@ export class Gantt implements IVisual {
       propertyName: "value",
     };
 
+  private _lastMilestones?: {
+    useIcons?: boolean;
+    roundedBars?: boolean;
+    useLegendColorForBars?: boolean;
+    showResourceOnBars?: boolean;
+    resourceInitialOnly?: boolean;
+  };
+
   public static DefaultValues = {
     AxisTickSize: 6,
     BarMargin: 2,
@@ -2119,43 +2127,60 @@ export class Gantt implements IVisual {
 
     const settings: GanttChartSettingsModel = this.formattingSettings;
 
+    // host objects (may be partial!)
     const objs = (dataView?.metadata?.objects ?? {}) as any;
     const m = objs["milestones"] as any;
 
+    // ensure cache object
+    this._lastMilestones ??= {};
+
+    // helper: adopt a boolean from host payload if present,
+    // otherwise keep the last known value, otherwise keep current default.
+    const stickBool = (
+      host: any,
+      key: keyof NonNullable<Gantt["_lastMilestones"]>,
+      target: { value: boolean }
+    ) => {
+      if (typeof host?.[key] === "boolean") {
+        target.value = host[key];
+        this._lastMilestones![key] = host[key];
+      } else if (typeof this._lastMilestones![key] === "boolean") {
+        target.value = this._lastMilestones![key]!;
+      }
+    };
+
+    // --- Milestones card: make booleans "sticky"
+    const ms = settings.milestonesCardSettings;
+
+    stickBool(m, "useIcons", ms.useIcons);
+    stickBool(m, "roundedBars", ms.roundedBars);
+    stickBool(m, "useLegendColorForBars", ms.useLegendColorForBars);
+    stickBool(m, "showResourceOnBars", ms.showResourceOnBars);
+    // resourceInitialOnly exists only in your build, so guard it:
+    if ((ms as any).resourceInitialOnly) {
+      stickBool(m, "resourceInitialOnly", (ms as any).resourceInitialOnly);
+    }
+
+    // non-boolean milestone fields:
     const applyAllFromHost: boolean = !!m?.applyToAll;
-    settings.milestonesCardSettings.applyToAll.value = applyAllFromHost;
+    ms.applyToAll.value = applyAllFromHost;
 
     const shapeFromHost = normalizeEnum(m?.globalShape, MilestoneShape.Flag, [
       MilestoneShape.Flag,
       MilestoneShape.Rhombus,
       MilestoneShape.Square,
     ] as const);
-    settings.milestonesCardSettings.globalShape.value = {
+    ms.globalShape.value = {
       displayNameKey: "Visual_Milestone_Shape",
       value: shapeFromHost,
     };
-    settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
+    ms.globalShape.visible = applyAllFromHost;
 
-    if (typeof m?.useLegendColorForBars === "boolean") {
-      settings.milestonesCardSettings.useLegendColorForBars.value =
-        m.useLegendColorForBars;
-    }
-
-    if (typeof m?.useIcons === "boolean") {
-      settings.milestonesCardSettings.useIcons.value = m.useIcons;
-    }
-    if (typeof m?.roundedBars === "boolean") {
-      settings.milestonesCardSettings.roundedBars.value = m.roundedBars;
-    }
-
-    if (typeof m?.showResourceOnBars === "boolean") {
-      settings.milestonesCardSettings.showResourceOnBars.value =
-        m.showResourceOnBars;
-    }
-
+    // keep your existing high-contrast / other cards logic
     if (colorHelper) {
-      // existing high-contrast logic
+      // existing high-contrast logic if you had any
     }
+
     return settings;
   }
 
@@ -3439,14 +3464,18 @@ export class Gantt implements IVisual {
     );
 
     // Always clear whichever mode was drawn last time:
-    taskSelection.selectAll(Gantt.TaskMilestone.selectorName).remove();
-    taskSelection.selectAll("path.milestone-as-bar").remove();
-    taskSelection.selectAll("text.milestone-legend").remove();
     const useIcons =
       !!this.viewModel.settings.milestonesCardSettings.useIcons.value;
+
     if (useIcons) {
+      // we’re rendering ICON mode, so clear BAR mode artifacts only
+      taskSelection.selectAll("path.milestone-as-bar").remove();
+      taskSelection.selectAll("text.milestone-resource").remove();
       this.MilestonesRender(taskSelection, taskConfigHeight);
     } else {
+      // we’re rendering BAR mode, so clear ICON mode artifacts only
+      taskSelection.selectAll(Gantt.TaskMilestone.selectorName).remove();
+      taskSelection.selectAll("text.milestone-legend").remove();
       this.MilestonesAsBarsRender(taskSelection, taskConfigHeight);
       this.MilestoneBarResourcesRender(taskSelection, taskConfigHeight);
     }
