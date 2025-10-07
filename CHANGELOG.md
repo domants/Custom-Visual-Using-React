@@ -1,14 +1,17 @@
 ## 1.0.0.1
 
-- Added a `Use Milestone Icon` toggle: when turned off, each milestone is rendered as a 1-day, full-height bar with no gaps; when turned on, it uses the default milestone icon (1-day milestone bars).
-- When the `Use Milestone Icon` toggle is turned off, it hides both the `Show Legend Text` toggle and the `Apply to All` toggle.
-- Added a toggle to enable rounded corners for the Milestone Bar.
+- Added a toggle to enable rounded corners for milestone bars.
+- Added a toggle to apply legend colors for 1-day milestone bars.
+- Added a `Use Milestone Icon` toggle:
+  - When _OFF_, each milestone is rendered as a `1-day milestone bar` (Midnight-Midnight), full-height bar with no gaps.
+  - When _ON_, it uses the default milestone icon with option to change the icon (Flag, Rhombus, Square).
+- When `Use Milestone Icon` is _OFF_, the `Show Legend Text`,`Apply to All` and `Milestone Shape` toggles are hidden.
 
 ## 1.0.0.0
 
 - added options to control tooltip
 - Added milestone icon flag (pennant)
-- Option to display legend text next to the milestone icon
+- Option to `display legend text` next to the milestone icon
 - Ability to apply milestone icon to all occurrences
 - Option to change tooltip mode (All, Dates only, Off)
 

@@ -2,6 +2,7 @@
 
 import powerbiVisualsApi from "powerbi-visuals-api";
 import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
+
 import { legendInterfaces } from "powerbi-visuals-utils-chartutils";
 import { LegendDataPoint } from "powerbi-visuals-utils-chartutils/lib/legend/legendInterfaces";
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
@@ -364,15 +365,22 @@ export class MilestonesCardSettings extends Card {
     value: true,
   });
 
-  name = "milestones";
-  displayNameKey = "Visual_Milestones";
+  useLegendColorForBars = new formattingSettings.ToggleSwitch({
+    name: "useLegendColorForBars",
+    displayNameKey: "Milestone_UseLegendColorForBars",
+    value: false,
+  });
 
   // default; filterSettingsCards() will re-compose this
   slices: FormattingSettingsSlice[] = [
     this.useIcons,
     this.showLabels,
     this.applyToAll,
+    this.useLegendColorForBars,
   ];
+
+  name = "milestones";
+  displayNameKey = "Visual_Milestones";
 }
 
 export class TaskLabelsCardSettings extends Card {
@@ -711,6 +719,7 @@ export class TaskResourceCardSettings extends Card {
     value: false,
   });
 
+  visible: boolean = true;
   name: string = "taskResource";
   displayNameKey: string = "Visual_DataLabels";
   slices = [
@@ -781,6 +790,7 @@ export class GanttChartSettingsModel extends Model {
     this.taskConfigCardSettings,
     this.taskResourceCardSettings,
     this.dateTypeCardSettings,
+    this.milestonesCardSettings,
   ];
 
   setLocalizedOptions(localizationManager: ILocalizationManager) {

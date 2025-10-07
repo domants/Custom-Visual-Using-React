@@ -473,13 +473,9 @@
           "displayNameKey": "Milestone_RoundedBars",
           "type": { "bool": true }
         },
-        "rehearsalColor": {
-          "displayName": "Rehearsal color",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "cutoverColor": {
-          "displayName": "Cutover color",
-          "type": { "fill": { "solid": { "color": true } } }
+        "useLegendColorForBars": {
+          "displayNameKey": "Milestone_UseLegendColorForBars",
+          "type": { "bool": true }
         }
       }
     },

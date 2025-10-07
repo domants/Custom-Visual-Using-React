@@ -2104,44 +2104,6 @@ export class Gantt implements IVisual {
     };
   }
 
-  // public parseSettings(
-  //   dataView: DataView,
-  //   colorHelper: ColorHelper
-  // ): GanttChartSettingsModel {
-  //   this.formattingSettings =
-  //     this.formattingSettingsService.populateFormattingSettingsModel(
-  //       GanttChartSettingsModel,
-  //       dataView
-  //     );
-  //   const settings: GanttChartSettingsModel = this.formattingSettings;
-
-  //   const objs = (dataView?.metadata?.objects ?? {}) as any;
-  //   const m = objs["milestones"] as any;
-
-  //   const applyAllFromHost: boolean = !!m?.applyToAll;
-  //   settings.milestonesCardSettings.applyToAll.value = applyAllFromHost;
-
-  //   const shapeFromHost = normalizeEnum(m?.globalShape, MilestoneShape.Flag, [
-  //     MilestoneShape.Flag,
-  //     MilestoneShape.Rhombus,
-  //     MilestoneShape.Square,
-  //   ] as const);
-
-  //   settings.milestonesCardSettings.globalShape.value = {
-  //     displayNameKey: "Visual_Milestone_Shape",
-  //     value: shapeFromHost,
-  //   };
-
-  //   // Optional: show/hide the dropdown based on Apply to All
-  //   settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
-
-  //   // (keep your existing high-contrast logic, etc.)
-  //   if (colorHelper) {
-  //     // ... your existing high-contrast code ...
-  //   }
-  //   return settings;
-  // }
-
   public parseSettings(
     dataView: DataView,
     colorHelper: ColorHelper
@@ -2171,18 +2133,14 @@ export class Gantt implements IVisual {
     };
     settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
 
+    if (typeof m?.useLegendColorForBars === "boolean") {
+      settings.milestonesCardSettings.useLegendColorForBars.value =
+        m.useLegendColorForBars;
+    }
+
     if (typeof m?.useIcons === "boolean") {
       settings.milestonesCardSettings.useIcons.value = m.useIcons;
     }
-    if (typeof m?.roundedBars === "boolean") {
-      settings.milestonesCardSettings.roundedBars.value = m.roundedBars;
-    }
-
-    //pull the toggle from host if present
-    if (typeof m?.useIcons === "boolean") {
-      settings.milestonesCardSettings.useIcons.value = m.useIcons;
-    }
-
     if (typeof m?.roundedBars === "boolean") {
       settings.milestonesCardSettings.roundedBars.value = m.roundedBars;
     }
@@ -3484,61 +3442,6 @@ export class Gantt implements IVisual {
     return drawNotRoundedRectByPath(x, y, w, h);
   }
 
-  // private MilestonesAsBarsRender(
-  //   taskSelection: Selection<Task>,
-  //   taskConfigHeight: number
-  // ): void {
-  //   const sel = taskSelection
-  //     .selectAll<SVGPathElement, MilestonePath>("path.milestone-as-bar")
-  //     .data((task: Task) => {
-  //       const ms = Array.isArray(task.Milestones) ? task.Milestones : [];
-  //       // project each Milestone -> MilestonePath for typing & tooltips
-  //       return ms.map(
-  //         (m) =>
-  //           ({
-  //             type: m.type,
-  //             start: m.start,
-  //             taskID: task.index,
-  //             tooltipInfo: m.tooltipInfo,
-  //             color: this.getMilestoneColor(m.type),
-  //             label: task.taskType || "",
-  //           } as MilestonePath)
-  //       );
-  //     });
-
-  //   sel.exit().remove();
-
-  //   const merged = sel
-  //     .enter()
-  //     .append("path")
-  //     .classed("milestone-as-bar", true)
-  //     .merge(sel as any);
-
-  //   if (!this.hasNotNullableDates) return;
-
-  //   merged
-  //     .attr("d", (m: MilestonePath) => {
-  //       const { start, end } = Gantt.daySpan(m.start);
-  //       const x = Gantt.TimeScale(start);
-  //       const w = Gantt.taskDurationToWidth(start, end);
-  //       const row = m.taskID ?? 0;
-  //       const y =
-  //         Gantt.getBarYCoordinate(row, taskConfigHeight) +
-  //         (row + 1) * this.getResourceLabelTopMargin();
-  //       const h = Gantt.getBarHeight(taskConfigHeight);
-  //       return drawNotRoundedRectByPath(x, y, w, h);
-  //     })
-  //     .style("fill", (m: MilestonePath) =>
-  //       this.colorHelper.getHighContrastColor(
-  //         "foreground",
-  //         m.color || this.getMilestoneColor(m.type)
-  //       )
-  //     );
-
-  //   // tooltips now match the expected type
-  //   this.renderTooltip(merged);
-  // }
-
   // Draw 1-day bars for milestones, with tooltips, square corners
   private MilestonesAsBarsRender(
     taskSelection: Selection<Task>,
@@ -3555,8 +3458,8 @@ export class Gantt implements IVisual {
               start: m.start,
               taskID: task.index,
               tooltipInfo: m.tooltipInfo,
-              color: this.getMilestoneColor(m.type),
-              label: task.taskType || "",
+              color: this.getMilestoneColor(m.type), // fallback
+              label: task.taskType || "", // legend label
             } as MilestonePath)
         );
       });
@@ -3571,24 +3474,26 @@ export class Gantt implements IVisual {
 
     if (!this.hasNotNullableDates) return;
 
-    // NEW: read toggle (only meaningful when icons are OFF)
-    //const rounded = !!this.viewModel.settings.milestonesCardSettings.roundedBars.value;
     const rounded =
       !!this.viewModel.settings.milestonesCardSettings.roundedBars.value;
+
+    const useLegend =
+      !!this.viewModel.settings.milestonesCardSettings.useLegendColorForBars
+        .value;
 
     merged
       .attr("d", (m: MilestonePath) =>
         this.getMilestoneBarPath(m, taskConfigHeight, rounded)
       )
-      // Use the Legend color based on the series label; fallback to the old milestone color
       .style("fill", (m: MilestonePath) => {
-        const legendColor = this.getLegendPointColor(m.label);
-        return (
-          legendColor ??
-          this.colorHelper.getHighContrastColor(
-            "foreground",
-            m.color || this.getMilestoneColor(m.type)
-          )
+        if (useLegend) {
+          const legendColor = this.getLegendPointColor(m.label);
+          return legendColor;
+        }
+        // fallback to the per-milestone color
+        return this.colorHelper.getHighContrastColor(
+          "foreground",
+          m.color || this.getMilestoneColor(m.type)
         );
       });
 
@@ -3661,8 +3566,6 @@ export class Gantt implements IVisual {
     const fallback =
       this.viewModel?.settings?.taskConfigCardSettings?.fill?.value?.value ||
       Gantt.DefaultValues.TaskColor;
-
-    // Respect high-contrast themes
     return this.colorHelper.getHighContrastColor(
       "foreground",
       dp?.color ?? fallback
@@ -4653,35 +4556,46 @@ export class Gantt implements IVisual {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
 
-          const useIcons = !!card.useIcons.value; // <-- already there
-          const isAll = !!card.applyToAll.value; // <-- already there
+          const useIcons = !!card.useIcons.value;
+          const applyAll = !!card.applyToAll.value;
 
-          // default: hide shape pickers until we decide to show them
+          // default visibilities
           card.shapeType.visible = false;
           card.globalShape.visible = false;
+          card.roundedBars.visible = false;
+          card.useLegendColorForBars.visible = false;
 
           if (!useIcons) {
-            // BAR MODE
-            // Only show master toggle + the new Rounded Bars toggle in bar mode
-            card.slices = [card.useIcons, card.roundedBars];
+            // BAR MODE (icons OFF)
+            // Show toggles that actually affect bar rendering
+            card.roundedBars.visible = true;
+            card.useLegendColorForBars.visible = true;
+
+            card.slices = [
+              card.useIcons, // switch back to icons if desired
+              card.roundedBars, // rounded ends for 1-day bars
+              card.useLegendColorForBars, // fill bars with legend color
+            ];
             break;
           }
 
-          // ICON MODE (existing behavior)
+          // ICON MODE (icons ON)
+          // Show label + per-type / global shape choices
           const mPoints = this.viewModel?.milestonesData?.dataPoints;
 
           if (!mPoints?.length) {
-            // no categories → only global options
+            // No milestone categories → only global options
             card.slices = [card.useIcons, card.showLabels, card.applyToAll];
-            if (isAll) {
+            if (applyAll) {
               card.globalShape.visible = true;
               card.slices.push(card.globalShape);
             }
             break;
           }
 
+          // There are milestone categories, surface per-type rows
           const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq); // adds per-type slices
+          settings.populateMilestones(uniq); // appends per-type rows into card.slices
 
           const top = new Set([
             card.useIcons,
@@ -4691,16 +4605,16 @@ export class Gantt implements IVisual {
             card.shapeType,
             card.fill,
           ]);
-          const perType = card.slices.filter((s) => !top.has(s));
+          const perTypeRows = card.slices.filter((s) => !top.has(s));
 
-          card.slices = isAll
+          card.slices = applyAll
             ? [
                 card.useIcons,
                 card.showLabels,
                 card.applyToAll,
                 ((card.globalShape.visible = true), card.globalShape),
               ]
-            : [card.useIcons, card.showLabels, card.applyToAll, ...perType];
+            : [card.useIcons, card.showLabels, card.applyToAll, ...perTypeRows];
 
           break;
         }
