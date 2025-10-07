@@ -371,6 +371,12 @@ export class MilestonesCardSettings extends Card {
     value: false,
   });
 
+  showResourceOnBars = new formattingSettings.ToggleSwitch({
+    name: "showResourceOnBars",
+    displayNameKey: "Milestone_ShowResourceOnBars",
+    value: false, // default hidden
+  });
+
   // default; filterSettingsCards() will re-compose this
   slices: FormattingSettingsSlice[] = [
     this.useIcons,

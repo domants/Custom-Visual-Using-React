@@ -476,6 +476,10 @@
         "useLegendColorForBars": {
           "displayNameKey": "Milestone_UseLegendColorForBars",
           "type": { "bool": true }
+        },
+        "showResourceOnBars": {
+          "displayNameKey": "Milestone_ShowResourceOnBars",
+          "type": { "bool": true }
         }
       }
     },
