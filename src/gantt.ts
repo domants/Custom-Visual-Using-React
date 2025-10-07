@@ -4006,7 +4006,8 @@ export class Gantt implements IVisual {
       this.viewModel.settings.taskResourceCardSettings.fontSize.value;
     const taskResourcePosition: ResourceLabelPosition =
       ResourceLabelPosition[
-        this.viewModel.settings.taskResourceCardSettings.position.value.value
+        this.viewModel.settings.taskResourceCardSettings.position.value
+          .value as ResourceLabelPosition
       ];
     const taskResourceFullText =
       this.viewModel.settings.taskResourceCardSettings.fullText.value;
@@ -4246,7 +4247,8 @@ export class Gantt implements IVisual {
       this.viewModel.settings.taskResourceCardSettings.fontSize.value;
     const taskResourcePosition: ResourceLabelPosition =
       ResourceLabelPosition[
-        this.viewModel.settings.taskResourceCardSettings.position.value.value
+        this.viewModel.settings.taskResourceCardSettings.position.value
+          .value as ResourceLabelPosition
       ];
 
     let margin: number = 0;
@@ -4345,7 +4347,6 @@ export class Gantt implements IVisual {
     const todayColor: string =
       this.viewModel.settings.dateTypeCardSettings.todayColor.value.value;
 
-    // Collect unique milestone dates: include “today” + all task milestone dates
     const milestoneDates: Date[] = [];
     const pushUnique = (d: Date) => {
       if (!(d instanceof Date) || isNaN(d.getTime())) return;
@@ -4566,25 +4567,22 @@ export class Gantt implements IVisual {
           card.useLegendColorForBars.visible = false;
 
           if (!useIcons) {
-            // BAR MODE (icons OFF)
             // Show toggles that actually affect bar rendering
             card.roundedBars.visible = true;
             card.useLegendColorForBars.visible = true;
 
             card.slices = [
-              card.useIcons, // switch back to icons if desired
-              card.roundedBars, // rounded ends for 1-day bars
-              card.useLegendColorForBars, // fill bars with legend color
+              card.useIcons,
+              card.roundedBars,
+              card.useLegendColorForBars,
             ];
             break;
           }
 
-          // ICON MODE (icons ON)
           // Show label + per-type / global shape choices
           const mPoints = this.viewModel?.milestonesData?.dataPoints;
 
           if (!mPoints?.length) {
-            // No milestone categories → only global options
             card.slices = [card.useIcons, card.showLabels, card.applyToAll];
             if (applyAll) {
               card.globalShape.visible = true;
@@ -4593,7 +4591,6 @@ export class Gantt implements IVisual {
             break;
           }
 
-          // There are milestone categories, surface per-type rows
           const uniq = Gantt.getUniqueMilestones(mPoints);
           settings.populateMilestones(uniq); // appends per-type rows into card.slices
 
