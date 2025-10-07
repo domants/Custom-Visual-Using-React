@@ -3572,6 +3572,7 @@ export class Gantt implements IVisual {
     if (!this.hasNotNullableDates) return;
 
     // NEW: read toggle (only meaningful when icons are OFF)
+    //const rounded = !!this.viewModel.settings.milestonesCardSettings.roundedBars.value;
     const rounded =
       !!this.viewModel.settings.milestonesCardSettings.roundedBars.value;
 
@@ -3579,12 +3580,17 @@ export class Gantt implements IVisual {
       .attr("d", (m: MilestonePath) =>
         this.getMilestoneBarPath(m, taskConfigHeight, rounded)
       )
-      .style("fill", (m: MilestonePath) =>
-        this.colorHelper.getHighContrastColor(
-          "foreground",
-          m.color || this.getMilestoneColor(m.type)
-        )
-      );
+      // Use the Legend color based on the series label; fallback to the old milestone color
+      .style("fill", (m: MilestonePath) => {
+        const legendColor = this.getLegendPointColor(m.label);
+        return (
+          legendColor ??
+          this.colorHelper.getHighContrastColor(
+            "foreground",
+            m.color || this.getMilestoneColor(m.type)
+          )
+        );
+      });
 
     this.renderTooltip(merged);
   }
@@ -3646,6 +3652,21 @@ export class Gantt implements IVisual {
       default:
         return drawFlag(h);
     }
+  }
+
+  // Returns the legend color for a given series label (task type), with a safe fallback
+  private getLegendPointColor(label: string): string {
+    const points = this.viewModel?.legendData?.dataPoints ?? [];
+    const dp = points.find((p) => p.label === label);
+    const fallback =
+      this.viewModel?.settings?.taskConfigCardSettings?.fill?.value?.value ||
+      Gantt.DefaultValues.TaskColor;
+
+    // Respect high-contrast themes
+    return this.colorHelper.getHighContrastColor(
+      "foreground",
+      dp?.color ?? fallback
+    );
   }
 
   /**
