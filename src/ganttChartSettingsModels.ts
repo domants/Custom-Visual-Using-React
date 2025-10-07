@@ -358,6 +358,12 @@ export class MilestonesCardSettings extends Card {
     value: true,
   });
 
+  roundedBars = new formattingSettings.ToggleSwitch({
+    name: "roundedBars",
+    displayNameKey: "Milestone_RoundedBars",
+    value: true,
+  });
+
   name = "milestones";
   displayNameKey = "Visual_Milestones";
 

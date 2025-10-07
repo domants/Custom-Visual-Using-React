@@ -2171,9 +2171,20 @@ export class Gantt implements IVisual {
     };
     settings.milestonesCardSettings.globalShape.visible = applyAllFromHost;
 
+    if (typeof m?.useIcons === "boolean") {
+      settings.milestonesCardSettings.useIcons.value = m.useIcons;
+    }
+    if (typeof m?.roundedBars === "boolean") {
+      settings.milestonesCardSettings.roundedBars.value = m.roundedBars;
+    }
+
     //pull the toggle from host if present
     if (typeof m?.useIcons === "boolean") {
       settings.milestonesCardSettings.useIcons.value = m.useIcons;
+    }
+
+    if (typeof m?.roundedBars === "boolean") {
+      settings.milestonesCardSettings.roundedBars.value = m.roundedBars;
     }
 
     if (colorHelper) {
@@ -2336,6 +2347,9 @@ export class Gantt implements IVisual {
     }
 
     this.updateInternal(options);
+    const rb =
+      options?.dataViews?.[0]?.metadata?.objects?.milestones?.roundedBars;
+    console.log(`roundedBars toggled to -> ${rb}`);
   }
 
   private updateInternal(options: VisualUpdateOptions): void {
@@ -3444,6 +3458,87 @@ export class Gantt implements IVisual {
     taskRect.exit().remove();
   }
 
+  // DRAW helper for milestone 1-day bar; respects rounded toggle
+  private getMilestoneBarPath(
+    m: MilestonePath,
+    taskConfigHeight: number,
+    rounded: boolean
+  ): string {
+    const { start, end } = Gantt.daySpan(m.start);
+    const x = Gantt.TimeScale(start);
+    const w = Gantt.taskDurationToWidth(start, end);
+
+    const row = m.taskID ?? 0;
+    const y =
+      Gantt.getBarYCoordinate(row, taskConfigHeight) +
+      (row + 1) * this.getResourceLabelTopMargin();
+
+    const h = Gantt.getBarHeight(taskConfigHeight);
+
+    // safe radius (cannot exceed half of width/height)
+    const r = Math.min(Gantt.RectRound, h / 2, w / 2);
+
+    if (rounded && w >= 2 * r) {
+      return drawRoundedRectByPath(x, y, w, h, r);
+    }
+    return drawNotRoundedRectByPath(x, y, w, h);
+  }
+
+  // private MilestonesAsBarsRender(
+  //   taskSelection: Selection<Task>,
+  //   taskConfigHeight: number
+  // ): void {
+  //   const sel = taskSelection
+  //     .selectAll<SVGPathElement, MilestonePath>("path.milestone-as-bar")
+  //     .data((task: Task) => {
+  //       const ms = Array.isArray(task.Milestones) ? task.Milestones : [];
+  //       // project each Milestone -> MilestonePath for typing & tooltips
+  //       return ms.map(
+  //         (m) =>
+  //           ({
+  //             type: m.type,
+  //             start: m.start,
+  //             taskID: task.index,
+  //             tooltipInfo: m.tooltipInfo,
+  //             color: this.getMilestoneColor(m.type),
+  //             label: task.taskType || "",
+  //           } as MilestonePath)
+  //       );
+  //     });
+
+  //   sel.exit().remove();
+
+  //   const merged = sel
+  //     .enter()
+  //     .append("path")
+  //     .classed("milestone-as-bar", true)
+  //     .merge(sel as any);
+
+  //   if (!this.hasNotNullableDates) return;
+
+  //   merged
+  //     .attr("d", (m: MilestonePath) => {
+  //       const { start, end } = Gantt.daySpan(m.start);
+  //       const x = Gantt.TimeScale(start);
+  //       const w = Gantt.taskDurationToWidth(start, end);
+  //       const row = m.taskID ?? 0;
+  //       const y =
+  //         Gantt.getBarYCoordinate(row, taskConfigHeight) +
+  //         (row + 1) * this.getResourceLabelTopMargin();
+  //       const h = Gantt.getBarHeight(taskConfigHeight);
+  //       return drawNotRoundedRectByPath(x, y, w, h);
+  //     })
+  //     .style("fill", (m: MilestonePath) =>
+  //       this.colorHelper.getHighContrastColor(
+  //         "foreground",
+  //         m.color || this.getMilestoneColor(m.type)
+  //       )
+  //     );
+
+  //   // tooltips now match the expected type
+  //   this.renderTooltip(merged);
+  // }
+
   // Draw 1-day bars for milestones, with tooltips, square corners
   private MilestonesAsBarsRender(
     taskSelection: Selection<Task>,
@@ -3453,7 +3548,6 @@ export class Gantt implements IVisual {
       .selectAll<SVGPathElement, MilestonePath>("path.milestone-as-bar")
       .data((task: Task) => {
         const ms = Array.isArray(task.Milestones) ? task.Milestones : [];
-        // project each Milestone -> MilestonePath for typing & tooltips
         return ms.map(
           (m) =>
             ({
@@ -3477,18 +3571,14 @@ export class Gantt implements IVisual {
 
     if (!this.hasNotNullableDates) return;
 
+    // NEW: read toggle (only meaningful when icons are OFF)
+    const rounded =
+      !!this.viewModel.settings.milestonesCardSettings.roundedBars.value;
+
     merged
-      .attr("d", (m: MilestonePath) => {
-        const { start, end } = Gantt.daySpan(m.start);
-        const x = Gantt.TimeScale(start);
-        const w = Gantt.taskDurationToWidth(start, end);
-        const row = m.taskID ?? 0;
-        const y =
-          Gantt.getBarYCoordinate(row, taskConfigHeight) +
-          (row + 1) * this.getResourceLabelTopMargin();
-        const h = Gantt.getBarHeight(taskConfigHeight);
-        return drawNotRoundedRectByPath(x, y, w, h);
-      })
+      .attr("d", (m: MilestonePath) =>
+        this.getMilestoneBarPath(m, taskConfigHeight, rounded)
+      )
       .style("fill", (m: MilestonePath) =>
         this.colorHelper.getHighContrastColor(
           "foreground",
@@ -3496,7 +3586,6 @@ export class Gantt implements IVisual {
         )
       );
 
-    // tooltips now match the expected type
     this.renderTooltip(merged);
   }
 
@@ -4543,21 +4632,21 @@ export class Gantt implements IVisual {
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
 
-          const useIcons = !!card.useIcons.value; // the toggle
-          const isAll = !!card.applyToAll.value;
+          const useIcons = !!card.useIcons.value; // <-- already there
+          const isAll = !!card.applyToAll.value; // <-- already there
 
           // default: hide shape pickers until we decide to show them
           card.shapeType.visible = false;
           card.globalShape.visible = false;
 
-          // If icons are OFF → hide Show Labels + Apply to all (and any per-type controls)
           if (!useIcons) {
-            card.slices = [card.useIcons]; // only show the master toggle
+            // BAR MODE
+            // Only show master toggle + the new Rounded Bars toggle in bar mode
+            card.slices = [card.useIcons, card.roundedBars];
             break;
           }
 
-          // Icons are ON → show Show Labels and either "Apply to all + Global shape"
-          // or the per-type controls, as you had before.
+          // ICON MODE (existing behavior)
           const mPoints = this.viewModel?.milestonesData?.dataPoints;
 
           if (!mPoints?.length) {
@@ -4570,11 +4659,9 @@ export class Gantt implements IVisual {
             break;
           }
 
-          // categories exist → build per-type controls
           const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq); // adds per-type slices to card.slices
+          settings.populateMilestones(uniq); // adds per-type slices
 
-          // Pull out per-type slices (everything not in the “top” set)
           const top = new Set([
             card.useIcons,
             card.showLabels,
@@ -4585,7 +4672,6 @@ export class Gantt implements IVisual {
           ]);
           const perType = card.slices.filter((s) => !top.has(s));
 
-          // Recompose slices depending on Apply to all
           card.slices = isAll
             ? [
                 card.useIcons,

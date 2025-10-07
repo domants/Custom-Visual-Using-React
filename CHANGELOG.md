@@ -1,7 +1,8 @@
 ## 1.0.0.1
 
-- Added a "Use Milestone Icon" toggle: when turned off, each milestone is rendered as a 1-day, full-height bar with no gaps; when turned on, it uses the default milestone icon.
+- Added a "Use Milestone Icon" toggle: when turned off, each milestone is rendered as a 1-day, full-height bar with no gaps; when turned on, it uses the default milestone icon (1-day milestone bars).
 - When the "Use Milestone Icon" toggle is turned off, it hides both the "Show Legend Text" toggle and the "Apply to All" toggle.
+- Added a toggle to enable rounded corners for the Milestone Bar.
 
 ## 1.0.0.0
 

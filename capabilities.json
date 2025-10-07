@@ -468,6 +468,10 @@
         "useIcons": {
           "displayNameKey": "Milestone_UseIcons",
           "type": { "bool": true }
+        },
+        "roundedBars": {
+          "displayNameKey": "Milestone_RoundedBars",
+          "type": { "bool": true }
         }
       }
     },
