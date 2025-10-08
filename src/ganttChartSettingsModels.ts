@@ -410,6 +410,12 @@ export class MilestonesCardSettings extends Card {
     value: false,
   });
 
+  milestoneLineColor = new formattingSettings.ColorPicker({
+    name: "milestoneLineColor",
+    displayNameKey: "Visual_Milestone_TodayLineColor",
+    value: { value: "#000000ff" },
+  });
+
   name: string = "milestones";
   displayNameKey: string = "Visual_Milestones";
 
@@ -426,6 +432,7 @@ export class MilestonesCardSettings extends Card {
     this.showResourceOnBars,
     this.resourceInitialOnly,
     this.milestoneLine,
+    this.milestoneLineColor,
   ];
 }
 

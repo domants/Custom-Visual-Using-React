@@ -4615,117 +4615,6 @@ export class Gantt implements IVisual {
    * @param timestamp the milestone to be shown in the time axis (default Date.now())
    */
 
-  // private createMilestoneLine(
-  //   tasks: GroupedTask[],
-  //   _timestamp: number = Date.now(),
-  //   _milestoneTitle?: string
-  // ): void {
-  //   // silence unused-vars (keeps ESLint happy if you keep the params)
-  //   void _timestamp;
-  //   void _milestoneTitle;
-
-  //   // Toggles from settings
-  //   const showMilestoneLines =
-  //     !!this.viewModel?.settings?.milestonesCardSettings?.milestoneLine?.value;
-
-  //   // NEW: Today line toggle lives in General card
-  //   const showTodayLine =
-  //     !!this.viewModel?.settings?.generalCardSettings?.todayLine?.value;
-
-  //   const lineSel = this.chartGroup.selectAll<SVGLineElement, Line>(
-  //     Gantt.ChartLine.selectorName
-  //   );
-
-  //   // If nothing to show or we don't have valid dates, clear and bail
-  //   if (!this.hasNotNullableDates || (!showMilestoneLines && !showTodayLine)) {
-  //     lineSel.remove();
-  //     return;
-  //   }
-
-  //   // Collect unique milestone dates (ghost lines)
-  //   const milestoneDates: Date[] = [];
-  //   if (showMilestoneLines) {
-  //     const pushUnique = (d: Date) => {
-  //       if (!(d instanceof Date) || isNaN(d.getTime())) return;
-  //       const t = d.getTime();
-  //       if (!milestoneDates.some((x) => x.getTime() === t)) {
-  //         milestoneDates.push(d);
-  //       }
-  //     };
-
-  //     tasks.forEach((group: GroupedTask) => {
-  //       group.tasks.forEach((t: Task) => {
-  //         if (Array.isArray(t.Milestones) && t.Milestones.length) {
-  //           t.Milestones.forEach((m) => pushUnique(m.start));
-  //         }
-  //       });
-  //     });
-  //   }
-
-  //   // Build line models
-  //   const dateTypeSettings: DateTypeCardSettings =
-  //     this.viewModel.settings.dateTypeCardSettings;
-
-  //   const lines: Line[] = [];
-
-  //   // Milestone ghost lines (if enabled)
-  //   for (const date of milestoneDates) {
-  //     lines.push({
-  //       x1: Gantt.TimeScale(date),
-  //       y1: Gantt.MilestoneTop,
-  //       x2: Gantt.TimeScale(date),
-  //       y2: this.getMilestoneLineLength(tasks.length),
-  //       tooltipInfo: Gantt.getTooltipForMilestoneLine(
-  //         date.toLocaleDateString(),
-  //         this.localizationManager,
-  //         dateTypeSettings,
-  //         [this.localizationManager.getDisplayName("Visual_Milestone_Name")]
-  //       ),
-  //     });
-  //   }
-
-  //   // Today line (if enabled)
-  //   if (showTodayLine) {
-  //     const now = new Date();
-  //     lines.push({
-  //       x1: Gantt.TimeScale(now),
-  //       y1: Gantt.MilestoneTop,
-  //       x2: Gantt.TimeScale(now),
-  //       y2: this.getMilestoneLineLength(tasks.length),
-  //       tooltipInfo: Gantt.getTooltipForMilestoneLine(
-  //         now.toLocaleDateString(),
-  //         this.localizationManager,
-  //         dateTypeSettings,
-  //         [this.localizationManager.getDisplayName("Visual_Label_Today")]
-  //       ),
-  //     });
-  //   }
-
-  //   // Render
-  //   const chartLineSelection = lineSel.data(lines);
-
-  //   const chartLineSelectionMerged = chartLineSelection
-  //     .enter()
-  //     .append<SVGLineElement>("line")
-  //     .merge(chartLineSelection);
-
-  //   chartLineSelectionMerged
-  //     .classed(Gantt.ChartLine.className, true)
-  //     .attr("x1", (l: Line) => l.x1)
-  //     .attr("y1", (l: Line) => l.y1)
-  //     .attr("x2", (l: Line) => l.x2)
-  //     .attr("y2", (l: Line) => l.y2)
-  //     .style("stroke", () =>
-  //       this.colorHelper.getHighContrastColor(
-  //         "foreground",
-  //         Gantt.DefaultValues.MilestoneLineColor
-  //       )
-  //     );
-
-  //   this.renderTooltip(chartLineSelectionMerged);
-  //   chartLineSelection.exit().remove();
-  // }
-
   private createMilestoneLine(
     tasks: GroupedTask[],
     _timestamp: number = Date.now(),
@@ -4752,17 +4641,20 @@ export class Gantt implements IVisual {
     }
 
     // Colors
-    const milestoneStroke = this.colorHelper.getHighContrastColor(
+    const msLineColorRaw =
+      this.viewModel?.settings?.milestonesCardSettings?.milestoneLineColor
+        ?.value?.value;
+    const msStroke = this.colorHelper.getHighContrastColor(
       "foreground",
-      Gantt.DefaultValues.MilestoneLineColor
+      msLineColorRaw || Gantt.DefaultValues.MilestoneLineColor
     );
-    const todayConfigured =
+
+    const todayColorRaw =
       this.viewModel?.settings?.generalCardSettings?.todayLineColor?.value
         ?.value || "#D0021B";
-
     const todayStroke = this.colorHelper.getHighContrastColor(
       "foreground",
-      todayConfigured
+      todayColorRaw
     );
 
     // Collect unique milestone dates (ghost lines)
@@ -4789,7 +4681,7 @@ export class Gantt implements IVisual {
     const dateTypeSettings: DateTypeCardSettings =
       this.viewModel.settings.dateTypeCardSettings;
 
-    type LineEx = Line & { __isToday?: boolean };
+    type LineEx = Line & { __isToday?: boolean; __key: string };
 
     const lines: LineEx[] = [];
 
@@ -4807,6 +4699,7 @@ export class Gantt implements IVisual {
           [this.localizationManager.getDisplayName("Visual_Milestone_Name")]
         ),
         __isToday: false,
+        __key: `ms-${date.getTime()}`,
       });
     }
 
@@ -4825,16 +4718,19 @@ export class Gantt implements IVisual {
           [this.localizationManager.getDisplayName("Visual_Label_Today")]
         ),
         __isToday: true,
+        __key: `today-${now.toDateString()}`,
       });
     }
 
     // Render (per-line stroke so Today can differ)
-    const chartLineSelection = lineSel.data(lines);
+    const chartLineSelection = this.chartGroup
+      .selectAll<SVGLineElement, LineEx>(Gantt.ChartLine.selectorName)
+      .data(lines, (d: any) => d.__key);
 
     const chartLineSelectionMerged = chartLineSelection
       .enter()
       .append<SVGLineElement>("line")
-      .merge(chartLineSelection);
+      .merge(chartLineSelection as any);
 
     chartLineSelectionMerged
       .classed(Gantt.ChartLine.className, true)
@@ -4842,9 +4738,7 @@ export class Gantt implements IVisual {
       .attr("y1", (l: LineEx) => l.y1)
       .attr("x2", (l: LineEx) => l.x2)
       .attr("y2", (l: LineEx) => l.y2)
-      .style("stroke", (l: LineEx) =>
-        l.__isToday ? todayStroke : milestoneStroke
-      );
+      .style("stroke", (l: LineEx) => (l.__isToday ? todayStroke : msStroke));
 
     this.renderTooltip(chartLineSelectionMerged);
     chartLineSelection.exit().remove();
@@ -4987,26 +4881,6 @@ export class Gantt implements IVisual {
     );
   }
 
-  // public filterSettingsCards() {
-  //   const settings = this.formattingSettings;
-
-  //   settings.cards.forEach((element) => {
-  //     switch (element.name) {
-  //       case Gantt.MilestonesPropertyIdentifier.objectName:
-  //         this.configureMilestonesCard();
-  //         break;
-  //       case Gantt.LegendPropertyIdentifier.objectName:
-  //         this.configureLegendCard();
-  //         break;
-  //       case Gantt.TaskResourcePropertyIdentifier.objectName:
-  //         this.configureTaskResourceCard();
-  //         break;
-  //       case "tooltipConfig":
-  //         this.configureTooltipCard();
-  //         break;
-  //     }
-  //   });
-  // }
   public filterSettingsCards() {
     const settings = this.formattingSettings;
 
@@ -5020,7 +4894,11 @@ export class Gantt implements IVisual {
           const useIcons = !!card.useIcons.value;
           const isAll = !!card.applyToAll.value;
 
-          // default visibility
+          // Show milestone line color only when milestone line itself is ON
+          const showMsLines = !!card.milestoneLine.value;
+          card.milestoneLineColor.visible = showMsLines;
+
+          // default visibility for shape controls
           card.shapeType.visible = false;
           card.globalShape.visible = false;
 
@@ -5042,6 +4920,7 @@ export class Gantt implements IVisual {
               card.showResourceOnBars,
               ...(maybeInitialOnly ? [maybeInitialOnly] : []),
               card.milestoneLine,
+              card.milestoneLineColor, // <- color picker appears with toggle
             ];
             break;
           }
@@ -5056,6 +4935,7 @@ export class Gantt implements IVisual {
               card.showLabels,
               card.applyToAll,
               card.milestoneLine,
+              card.milestoneLineColor, // <- include here too
             ];
             break;
           }
@@ -5072,6 +4952,7 @@ export class Gantt implements IVisual {
             card.shapeType,
             card.fill,
             card.milestoneLine,
+            card.milestoneLineColor,
           ]);
           const perType = card.slices.filter((s) => !top.has(s));
 
@@ -5083,6 +4964,7 @@ export class Gantt implements IVisual {
               card.applyToAll,
               card.globalShape,
               card.milestoneLine,
+              card.milestoneLineColor,
             ];
           } else {
             card.slices = [
@@ -5091,9 +4973,9 @@ export class Gantt implements IVisual {
               card.applyToAll,
               ...perType,
               card.milestoneLine,
+              card.milestoneLineColor,
             ];
           }
-
           break;
         }
 
@@ -5139,16 +5021,15 @@ export class Gantt implements IVisual {
         }
 
         // ───────────────────────────────────────────
-        // General card — Today line toggle + color
+        // General card — Today line toggle + color (kept from earlier)
         // ───────────────────────────────────────────
         case "general": {
           const g = settings.generalCardSettings;
 
-          // Show color picker only when "Show Today line" is ON
           const showToday = !!g.todayLine.value;
           g.todayLineColor.visible = showToday;
 
-          // Ensure both slices exist exactly once and preserve existing order
+          // Deduplicate slices while ensuring our controls are present
           const desired: any[] = [];
           const seen = new Set<any>();
           const push = (s: any) => {
@@ -5158,10 +5039,7 @@ export class Gantt implements IVisual {
             }
           };
 
-          // Keep whatever you already had (width/height/etc.)
           for (const s of g.slices) push(s);
-
-          // Ensure our two controls are present
           push(g.todayLine);
           push(g.todayLineColor);
 

@@ -504,6 +504,14 @@
         "milestoneLine": {
           "displayNameKey": "Visual_Milestone_ShowMilestoneLine",
           "type": { "bool": true }
+        },
+        "milestoneLineColor": {
+          "displayNameKey": "Visual_Milestone_TodayLineColor",
+          "type": {
+            "fill": {
+              "solid": { "color": true }
+            }
+          }
         }
       }
     },
