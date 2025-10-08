@@ -177,8 +177,15 @@ export class GeneralCardSettings extends Card {
     value: true,
   });
 
+  todayLineColor = new formattingSettings.ColorPicker({
+    name: "todayLineColor",
+    displayNameKey: "Visual_General_TodayLineColor",
+    value: { value: "#000000ff" },
+  });
+
   name: string = "general";
   displayNameKey: string = "Visual_General";
+
   slices = [
     this.groupTasks,
     this.scrollToCurrentTime,
@@ -188,6 +195,7 @@ export class GeneralCardSettings extends Card {
     this.barsRoundedCorners,
     this.fullDayBars,
     this.todayLine,
+    this.todayLineColor,
   ];
 }
 

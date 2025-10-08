@@ -328,6 +328,14 @@
         "todayLine": {
           "displayNameKey": "Visual_Milestone_ShowTodayLine",
           "type": { "bool": true }
+        },
+        "todayLineColor": {
+          "displayNameKey": "Visual_General_TodayLineColor",
+          "type": {
+            "fill": {
+              "solid": { "color": true }
+            }
+          }
         }
       }
     },

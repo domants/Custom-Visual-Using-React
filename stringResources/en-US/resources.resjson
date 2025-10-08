@@ -75,6 +75,7 @@
   "Visual_ScrollToCurrentTime": "Scroll to current time",
   "Visual_Full_Day_Bars_ForTasks":"Full Day Bar",
   "Visual_Milestone_ShowTodayLine":"Show Todays Line",
+  "Visual_General_TodayLineColor":"Today Line Color",
   "Visual_DaysOff": "Days off",
   "Visual_Day": "Day",
   "Visual_Day_Sunday": "Sunday",

@@ -2,6 +2,7 @@
 
 - Added `Full Day Bars` toggle for non-milestone bars — `visually extends the bar by one day` (e.g., end date is Oct 10, 2025, bar extends to Oct 11, 2025) without changing the actual end date value.
 - Added a toggle to show vertical lines for milestone and today (available under the General and Milestone cards)
+- Added a color picker to select color for todays line.
 
 ## 1.0.0.1
 
