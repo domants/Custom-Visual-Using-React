@@ -330,6 +330,7 @@ export class LegendCardSettings extends Card {
 
   name: string = "legend";
   displayNameKey: string = "Visual_Legend";
+
   slices: FormattingSettingsSlice[] = [
     this.position,
     this.showTitle,

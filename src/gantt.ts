@@ -3319,6 +3319,50 @@ export class Gantt implements IVisual {
       .remove();
   }
 
+  // private getMsResPositioners(cfg: {
+  //   pos: ResourceLabelPosition;
+  //   fontPx: number;
+  //   fontPt: number;
+  //   taskConfigHeight: number;
+  // }) {
+  //   const { pos, fontPx, taskConfigHeight } = cfg;
+
+  //   const xForMilestone = (start: Date, end: Date): number => {
+  //     switch (pos) {
+  //       case ResourceLabelPosition.Right:
+  //         return (
+  //           (this.hasNotNullableDates ? Gantt.TimeScale(end) : 0) +
+  //           fontPx / 2 +
+  //           Gantt.RectRound
+  //         );
+  //       case ResourceLabelPosition.Top:
+  //         return (
+  //           (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
+  //           Gantt.RectRound
+  //         );
+  //       case ResourceLabelPosition.Inside:
+  //       default: {
+  //         const x0 = this.hasNotNullableDates ? Gantt.TimeScale(start) : 0;
+  //         const w = this.hasNotNullableDates
+  //           ? Gantt.taskDurationToWidth(start, end)
+  //           : 0;
+  //         return (
+  //           x0 +
+  //           w / (2 * Gantt.ResourceLabelDefaultDivisionCoefficient) +
+  //           Gantt.RectRound
+  //         );
+  //       }
+  //     }
+  //   };
+
+  //   const yForMilestone = (row: number): number =>
+  //     Gantt.getBarYCoordinate(row, taskConfigHeight) +
+  //     Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, pos) +
+  //     (row + 1) * this.getResourceLabelTopMargin();
+
+  //   return { xForMilestone, yForMilestone };
+  // }
+
   private getMsResPositioners(cfg: {
     pos: ResourceLabelPosition;
     fontPx: number;
@@ -3342,23 +3386,33 @@ export class Gantt implements IVisual {
           );
         case ResourceLabelPosition.Inside:
         default: {
-          const x0 = this.hasNotNullableDates ? Gantt.TimeScale(start) : 0;
-          const w = this.hasNotNullableDates
-            ? Gantt.taskDurationToWidth(start, end)
-            : 0;
+          // keep your existing X logic; vertical centering is handled via Y
           return (
-            x0 +
-            w / (2 * Gantt.ResourceLabelDefaultDivisionCoefficient) +
+            (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
             Gantt.RectRound
           );
         }
       }
     };
 
-    const yForMilestone = (row: number): number =>
-      Gantt.getBarYCoordinate(row, taskConfigHeight) +
-      Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, pos) +
-      (row + 1) * this.getResourceLabelTopMargin();
+    const yForMilestone = (row: number): number => {
+      const barMid =
+        Gantt.getBarYCoordinate(row, taskConfigHeight) +
+        Gantt.getBarHeight(taskConfigHeight) / 2;
+      const rowOffset = (row + 1) * this.getResourceLabelTopMargin();
+
+      // Center vertically when label is Inside the bar
+      if (cfg.pos === ResourceLabelPosition.Inside) {
+        return barMid + rowOffset;
+      }
+
+      // Otherwise keep existing offsets
+      return (
+        Gantt.getBarYCoordinate(row, taskConfigHeight) +
+        Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, cfg.pos) +
+        rowOffset
+      );
+    };
 
     return { xForMilestone, yForMilestone };
   }
@@ -4435,9 +4489,13 @@ export class Gantt implements IVisual {
       .enter()
       .append("text")
       .merge(taskResource);
-    taskResourceMerged.classed(Gantt.TaskResource.className, true);
 
     taskResourceMerged
+      .classed(Gantt.TaskResource.className, true)
+      .classed(
+        "pos-inside",
+        taskResourcePosition === ResourceLabelPosition.Inside
+      ) // hook class
       .attr("x", (task: Task) =>
         this.getResourceLabelXCoordinate(
           task,
@@ -4462,11 +4520,16 @@ export class Gantt implements IVisual {
       )
       .style("fill", taskResourceColor)
       .style("font-size", PixelConverter.fromPoint(taskResourceFontSize))
+      // vertical centering only when Inside
       .style(
         "alignment-baseline",
         taskResourcePosition === ResourceLabelPosition.Inside
           ? "central"
           : "auto"
+      )
+      .attr(
+        "dominant-baseline",
+        taskResourcePosition === ResourceLabelPosition.Inside ? "central" : null
       );
 
     this.clipTaskResourceLabels(
@@ -4504,26 +4567,81 @@ export class Gantt implements IVisual {
     taskResourceFontSize: number,
     taskResourcePosition: ResourceLabelPosition
   ): number {
-    const barHeight: number = Gantt.getBarHeight(taskConfigHeight);
+    const barHeight = Gantt.getBarHeight(taskConfigHeight);
+
     switch (taskResourcePosition) {
       case ResourceLabelPosition.Right:
         return (
           barHeight / Gantt.DividerForCalculatingCenter +
           taskResourceFontSize / Gantt.DividerForCalculatingCenter
         );
+
       case ResourceLabelPosition.Top:
         return (
           -(taskResourceFontSize / Gantt.DividerForCalculatingPadding) +
           Gantt.LabelTopOffsetForPadding
         );
+
       case ResourceLabelPosition.Inside:
-        return (
-          -(taskResourceFontSize / Gantt.DividerForCalculatingPadding) +
-          Gantt.LabelTopOffsetForPadding +
-          barHeight / Gantt.ResourceLabelDefaultDivisionCoefficient
-        );
+        // ✅ exact vertical center of the bar
+        return barHeight / 2;
     }
+
+    // (Optional) fallback to avoid undefined
+    return 0;
   }
+
+  // private getResourceLabelXCoordinate(
+  //   task: Task,
+  //   taskConfigHeight: number,
+  //   taskResourceFontSize: number,
+  //   taskResourcePosition: ResourceLabelPosition
+  // ): number {
+  //   if (!this.hasNotNullableDates) {
+  //     return 0;
+  //   }
+
+  //   const barHeight: number = Gantt.getBarHeight(taskConfigHeight);
+  //   switch (taskResourcePosition) {
+  //     case ResourceLabelPosition.Right:
+  //       return (
+  //         Gantt.TimeScale(task.end) +
+  //           taskResourceFontSize / 2 +
+  //           Gantt.RectRound || 0
+  //       );
+  //     case ResourceLabelPosition.Top:
+  //       return Gantt.TimeScale(task.start) + Gantt.RectRound || 0;
+  //     case ResourceLabelPosition.Inside: {
+  //       return barHeight / 2;
+  //     }
+  //   }
+  // }
+
+  // private getResourceLabelXCoordinate(
+  //   task: Task,
+  //   taskConfigHeight: number,
+  //   taskResourceFontSize: number,
+  //   taskResourcePosition: ResourceLabelPosition
+  // ): number {
+  //   if (!this.hasNotNullableDates) return 0;
+
+  //   switch (taskResourcePosition) {
+  //     case ResourceLabelPosition.Right:
+  //       return (
+  //         Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
+  //       );
+
+  //     case ResourceLabelPosition.Top:
+  //       return Gantt.TimeScale(task.start) + Gantt.RectRound;
+
+  //     case ResourceLabelPosition.Inside: {
+  //       // ✅ midpoint horizontally
+  //       const x0 = Gantt.TimeScale(task.start);
+  //       const x1 = Gantt.TimeScale(task.end);
+  //       return (x0 + x1) / 2;
+  //     }
+  //   }
+  // }
 
   private getResourceLabelXCoordinate(
     task: Task,
@@ -4531,27 +4649,23 @@ export class Gantt implements IVisual {
     taskResourceFontSize: number,
     taskResourcePosition: ResourceLabelPosition
   ): number {
-    if (!this.hasNotNullableDates) {
-      return 0;
-    }
+    if (!this.hasNotNullableDates) return 0;
 
-    const barHeight: number = Gantt.getBarHeight(taskConfigHeight);
     switch (taskResourcePosition) {
       case ResourceLabelPosition.Right:
         return (
-          Gantt.TimeScale(task.end) +
-            taskResourceFontSize / 2 +
-            Gantt.RectRound || 0
+          Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
         );
+
       case ResourceLabelPosition.Top:
-        return Gantt.TimeScale(task.start) + Gantt.RectRound || 0;
-      case ResourceLabelPosition.Inside:
-        return (
-          Gantt.TimeScale(task.start) +
-            barHeight / (2 * Gantt.ResourceLabelDefaultDivisionCoefficient) +
-            Gantt.RectRound || 0
-        );
+        return Gantt.TimeScale(task.start) + Gantt.RectRound;
+
+      case ResourceLabelPosition.Inside: {
+        return Gantt.TimeScale(task.start) + 10; // 10px
+      }
     }
+
+    return 0; // fallback
   }
 
   /**
