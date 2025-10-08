@@ -83,7 +83,7 @@ git clone https://github.com/domants/Custom-Visual-Using-React.git
 ## Install Dependencies
 ### cd to your root folder and run the below command to install required packages.
 
-Global Installation (CLI Tool)
+Global Installation (CLI Tool) - You need to run this outside your root folder to install it globally.
 ```
 npm install -g powerbi-visuals-tools
 ```
