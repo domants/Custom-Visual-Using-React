@@ -4617,40 +4617,60 @@ export class Gantt implements IVisual {
 
   private createMilestoneLine(
     tasks: GroupedTask[],
-    timestamp: number = Date.now(),
-    milestoneTitle?: string
+    _timestamp: number = Date.now(),
+    _milestoneTitle?: string
   ): void {
-    if (!this.hasNotNullableDates) return;
+    // silence unused-vars (keeps ESLint happy if you keep the params)
+    void _timestamp;
+    void _milestoneTitle;
 
-    const today = new Date(timestamp);
-    const todayColor: string =
-      this.viewModel.settings.dateTypeCardSettings.todayColor.value.value;
+    // Toggles from settings
+    const showMilestoneLines =
+      !!this.viewModel?.settings?.milestonesCardSettings?.milestoneLine?.value;
 
+    // NEW: Today line toggle lives in General card
+    const showTodayLine =
+      !!this.viewModel?.settings?.generalCardSettings?.todayLine?.value;
+
+    const lineSel = this.chartGroup.selectAll<SVGLineElement, Line>(
+      Gantt.ChartLine.selectorName
+    );
+
+    // If nothing to show or we don't have valid dates, clear and bail
+    if (!this.hasNotNullableDates || (!showMilestoneLines && !showTodayLine)) {
+      lineSel.remove();
+      return;
+    }
+
+    // Collect unique milestone dates (ghost lines)
     const milestoneDates: Date[] = [];
-    const pushUnique = (d: Date) => {
-      if (!(d instanceof Date) || isNaN(d.getTime())) return;
-      const t = d.getTime();
-      if (!milestoneDates.some((x) => x.getTime() === t)) {
-        milestoneDates.push(d);
-      }
-    };
-    pushUnique(today);
-
-    tasks.forEach((group: GroupedTask) => {
-      group.tasks.forEach((t: Task) => {
-        if (Array.isArray(t.Milestones) && t.Milestones.length) {
-          t.Milestones.forEach((m) => pushUnique(m.start));
+    if (showMilestoneLines) {
+      const pushUnique = (d: Date) => {
+        if (!(d instanceof Date) || isNaN(d.getTime())) return;
+        const t = d.getTime();
+        if (!milestoneDates.some((x) => x.getTime() === t)) {
+          milestoneDates.push(d);
         }
-      });
-    });
+      };
 
+      tasks.forEach((group: GroupedTask) => {
+        group.tasks.forEach((t: Task) => {
+          if (Array.isArray(t.Milestones) && t.Milestones.length) {
+            t.Milestones.forEach((m) => pushUnique(m.start));
+          }
+        });
+      });
+    }
+
+    // Build line models
     const dateTypeSettings: DateTypeCardSettings =
       this.viewModel.settings.dateTypeCardSettings;
 
-    const lines: Line[] = milestoneDates.map((date) => {
-      const isToday = Gantt.TimeScale(date) === Gantt.TimeScale(today);
-      const title = isToday ? milestoneTitle : "Milestone";
-      return {
+    const lines: Line[] = [];
+
+    // Milestone ghost lines (if enabled)
+    for (const date of milestoneDates) {
+      lines.push({
         x1: Gantt.TimeScale(date),
         y1: Gantt.MilestoneTop,
         x2: Gantt.TimeScale(date),
@@ -4659,14 +4679,30 @@ export class Gantt implements IVisual {
           date.toLocaleDateString(),
           this.localizationManager,
           dateTypeSettings,
-          [title as any]
+          [this.localizationManager.getDisplayName("Visual_Milestone_Name")]
         ),
-      };
-    });
+      });
+    }
 
-    const chartLineSelection = this.chartGroup
-      .selectAll<SVGLineElement, Line>(Gantt.ChartLine.selectorName)
-      .data(lines);
+    // Today line (if enabled)
+    if (showTodayLine) {
+      const now = new Date();
+      lines.push({
+        x1: Gantt.TimeScale(now),
+        y1: Gantt.MilestoneTop,
+        x2: Gantt.TimeScale(now),
+        y2: this.getMilestoneLineLength(tasks.length),
+        tooltipInfo: Gantt.getTooltipForMilestoneLine(
+          now.toLocaleDateString(),
+          this.localizationManager,
+          dateTypeSettings,
+          [this.localizationManager.getDisplayName("Visual_Label_Today")]
+        ),
+      });
+    }
+
+    // Render
+    const chartLineSelection = lineSel.data(lines);
 
     const chartLineSelectionMerged = chartLineSelection
       .enter()
@@ -4679,13 +4715,12 @@ export class Gantt implements IVisual {
       .attr("y1", (l: Line) => l.y1)
       .attr("x2", (l: Line) => l.x2)
       .attr("y2", (l: Line) => l.y2)
-      .style("stroke", (l: Line) => {
-        const isToday = l.x1 === Gantt.TimeScale(today);
-        const color = isToday
-          ? todayColor
-          : Gantt.DefaultValues.MilestoneLineColor;
-        return this.colorHelper.getHighContrastColor("foreground", color);
-      });
+      .style("stroke", () =>
+        this.colorHelper.getHighContrastColor(
+          "foreground",
+          Gantt.DefaultValues.MilestoneLineColor
+        )
+      );
 
     this.renderTooltip(chartLineSelectionMerged);
     chartLineSelection.exit().remove();
@@ -4828,108 +4863,273 @@ export class Gantt implements IVisual {
     );
   }
 
+  // public filterSettingsCards() {
+  //   const settings = this.formattingSettings;
+
+  //   settings.cards.forEach((element) => {
+  //     switch (element.name) {
+  //       case Gantt.MilestonesPropertyIdentifier.objectName: {
+  //         const card = settings.milestonesCardSettings;
+  //         const useIcons = !!card.useIcons.value;
+  //         const isAll = !!card.applyToAll.value;
+
+  //         // default hide granular shape controls until decided below
+  //         card.shapeType.visible = false;
+  //         card.globalShape.visible = false;
+
+  //         if (!useIcons) {
+  //           // BAR MODE (Use Milestone Icon = OFF): show only bar-relevant toggles
+  //           card.showLabels.visible = false;
+  //           card.applyToAll.visible = false;
+  //           card.globalShape.visible = false;
+  //           card.shapeType.visible = false;
+  //           card.fill.visible = false;
+
+  //           // ⬇ include the new toggle "resourceInitialOnly"
+  //           card.slices = [
+  //             card.useIcons,
+  //             card.roundedBars,
+  //             card.useLegendColorForBars,
+  //             card.showResourceOnBars,
+  //             card.resourceInitialOnly,
+  //             card.milestoneLine,
+  //           ];
+  //           break;
+  //         } else {
+  //           // ICON MODE
+  //           card.showLabels.visible = true;
+
+  //           // existing logic building 'slices'...
+  //           const mPoints = this.viewModel?.milestonesData?.dataPoints;
+  //           if (!mPoints?.length) {
+  //             card.slices = [
+  //               card.useIcons,
+  //               card.showLabels,
+  //               card.applyToAll,
+  //               card.milestoneLine,
+  //             ]; // <-- add here
+  //           } else {
+  //             // ...your existing code that sets card.slices based on applyToAll...
+  //             card.slices = isAll
+  //               ? [
+  //                   card.useIcons,
+  //                   card.showLabels,
+  //                   card.applyToAll,
+  //                   ((card.globalShape.visible = true), card.globalShape),
+  //                   card.milestoneLine,
+  //                 ]
+  //               : [
+  //                   card.useIcons,
+  //                   card.showLabels,
+  //                   card.applyToAll,
+  //                   card.milestoneLine,
+  //                 ]; // <-- ensure it's included
+  //           }
+  //         }
+
+  //         // ICON MODE (Use Milestone Icon = ON)
+  //         card.showLabels.visible = true;
+
+  //         const mPoints = this.viewModel?.milestonesData?.dataPoints;
+  //         if (!mPoints?.length) {
+  //           card.slices = [card.useIcons, card.showLabels, card.applyToAll];
+  //           if (isAll) {
+  //             card.globalShape.visible = true;
+  //             card.slices.push(card.globalShape);
+  //           }
+  //           break;
+  //         }
+
+  //         const uniq = Gantt.getUniqueMilestones(mPoints);
+  //         settings.populateMilestones(uniq);
+
+  //         const top = new Set([
+  //           card.useIcons,
+  //           card.showLabels,
+  //           card.applyToAll,
+  //           card.globalShape,
+  //           card.shapeType,
+  //           card.fill,
+  //         ]);
+  //         const perType = card.slices.filter((s) => !top.has(s));
+
+  //         card.slices = isAll
+  //           ? [
+  //               card.useIcons,
+  //               card.showLabels,
+  //               card.applyToAll,
+  //               ((card.globalShape.visible = true), card.globalShape),
+  //             ]
+  //           : [card.useIcons, card.showLabels, card.applyToAll, ...perType];
+
+  //         break;
+  //       }
+
+  //       case Gantt.LegendPropertyIdentifier.objectName: {
+  //         if (
+  //           this.viewModel &&
+  //           !this.viewModel.isDurationFilled &&
+  //           !this.viewModel.isEndDateFilled
+  //         )
+  //           break;
+  //         const dataPoints = this.viewModel?.legendData?.dataPoints;
+  //         if (!dataPoints?.length) break;
+  //         settings.populateLegend(dataPoints, this.localizationManager);
+  //         break;
+  //       }
+
+  //       case Gantt.TaskResourcePropertyIdentifier.objectName: {
+  //         if (!this.viewModel.isResourcesFilled) {
+  //           settings.taskResourceCardSettings.visible = false;
+  //         }
+  //         break;
+  //       }
+
+  //       case "tooltipConfig": {
+  //         const mode =
+  //           this.formattingSettings.tooltipConfigCardSettings.mode.value;
+  //         if ((mode as any)?.value === "off") {
+  //           this.formattingSettings.tooltipConfigCardSettings.slices = [
+  //             this.formattingSettings.tooltipConfigCardSettings.mode,
+  //           ];
+  //         }
+  //         break;
+  //       }
+  //     }
+  //   });
+  // }
+
+  // gantt.ts (inside class Gantt)
+
+  // small router
   public filterSettingsCards() {
-    const settings = this.formattingSettings;
+    const s = this.formattingSettings;
 
-    settings.cards.forEach((element) => {
-      switch (element.name) {
-        case Gantt.MilestonesPropertyIdentifier.objectName: {
-          const card = settings.milestonesCardSettings;
-          const useIcons = !!card.useIcons.value;
-          const isAll = !!card.applyToAll.value;
-
-          // default hide granular shape controls until decided below
-          card.shapeType.visible = false;
-          card.globalShape.visible = false;
-
-          if (!useIcons) {
-            // BAR MODE (Use Milestone Icon = OFF): show only bar-relevant toggles
-            card.showLabels.visible = false; // labels apply to icon mode only
-            card.applyToAll.visible = false;
-            card.globalShape.visible = false;
-            card.shapeType.visible = false;
-            card.fill.visible = false;
-
-            // ⬇ include the new toggle "resourceInitialOnly"
-            card.slices = [
-              card.useIcons,
-              card.roundedBars,
-              card.useLegendColorForBars,
-              card.showResourceOnBars,
-              card.resourceInitialOnly,
-            ];
-            break;
-          }
-
-          // ICON MODE (Use Milestone Icon = ON)
-          card.showLabels.visible = true;
-
-          const mPoints = this.viewModel?.milestonesData?.dataPoints;
-          if (!mPoints?.length) {
-            card.slices = [card.useIcons, card.showLabels, card.applyToAll];
-            if (isAll) {
-              card.globalShape.visible = true;
-              card.slices.push(card.globalShape);
-            }
-            break;
-          }
-
-          const uniq = Gantt.getUniqueMilestones(mPoints);
-          settings.populateMilestones(uniq);
-
-          const top = new Set([
-            card.useIcons,
-            card.showLabels,
-            card.applyToAll,
-            card.globalShape,
-            card.shapeType,
-            card.fill,
-          ]);
-          const perType = card.slices.filter((s) => !top.has(s));
-
-          card.slices = isAll
-            ? [
-                card.useIcons,
-                card.showLabels,
-                card.applyToAll,
-                ((card.globalShape.visible = true), card.globalShape),
-              ]
-            : [card.useIcons, card.showLabels, card.applyToAll, ...perType];
-
+    s.cards.forEach((card) => {
+      switch (card.name) {
+        case Gantt.MilestonesPropertyIdentifier.objectName:
+          this.configureMilestonesCard();
           break;
-        }
-
-        case Gantt.LegendPropertyIdentifier.objectName: {
-          if (
-            this.viewModel &&
-            !this.viewModel.isDurationFilled &&
-            !this.viewModel.isEndDateFilled
-          )
-            break;
-          const dataPoints = this.viewModel?.legendData?.dataPoints;
-          if (!dataPoints?.length) break;
-          settings.populateLegend(dataPoints, this.localizationManager);
+        case Gantt.LegendPropertyIdentifier.objectName:
+          this.configureLegendCard();
           break;
-        }
-
-        case Gantt.TaskResourcePropertyIdentifier.objectName: {
-          if (!this.viewModel.isResourcesFilled) {
-            settings.taskResourceCardSettings.visible = false;
-          }
+        case Gantt.TaskResourcePropertyIdentifier.objectName:
+          this.configureTaskResourceCard();
           break;
-        }
-
-        case "tooltipConfig": {
-          const mode =
-            this.formattingSettings.tooltipConfigCardSettings.mode.value;
-          if ((mode as any)?.value === "off") {
-            this.formattingSettings.tooltipConfigCardSettings.slices = [
-              this.formattingSettings.tooltipConfigCardSettings.mode,
-            ];
-          }
+        case "tooltipConfig":
+          this.configureTooltipCard();
           break;
-        }
       }
     });
+  }
+
+  // --- helpers below (each comfortably < 100 lines)
+
+  private configureMilestonesCard() {
+    const s = this.formattingSettings;
+    const card = s.milestonesCardSettings;
+    const useIcons = !!card.useIcons.value;
+    const applyAll = !!card.applyToAll.value;
+
+    // default hidden; opt-in per mode
+    card.shapeType.visible = false;
+    card.globalShape.visible = false;
+
+    if (!useIcons) {
+      // BAR MODE
+      card.showLabels.visible = false;
+      card.applyToAll.visible = false;
+      card.globalShape.visible = false;
+      card.shapeType.visible = false;
+      card.fill.visible = false;
+
+      card.slices = [
+        card.useIcons,
+        card.roundedBars,
+        card.useLegendColorForBars,
+        card.showResourceOnBars,
+        card.resourceInitialOnly,
+        card.milestoneLine, // <-- your toggle
+      ];
+      return;
+    }
+
+    // ICON MODE
+    card.showLabels.visible = true;
+
+    const mPoints = this.viewModel?.milestonesData?.dataPoints;
+    if (!mPoints?.length) {
+      card.slices = [
+        card.useIcons,
+        card.showLabels,
+        card.applyToAll,
+        card.milestoneLine, // <-- your toggle
+      ];
+      if (applyAll) {
+        card.globalShape.visible = true;
+        card.slices.push(card.globalShape);
+      }
+      return;
+    }
+
+    // populate per-type controls
+    const uniq = Gantt.getUniqueMilestones(mPoints);
+    s.populateMilestones(uniq);
+
+    // top-level slices vs. per-type slices
+    const top = new Set([
+      card.useIcons,
+      card.showLabels,
+      card.applyToAll,
+      card.globalShape,
+      card.shapeType,
+      card.fill,
+    ]);
+    const perType = card.slices.filter((sl) => !top.has(sl));
+
+    card.slices = applyAll
+      ? [
+          card.useIcons,
+          card.showLabels,
+          card.applyToAll,
+          ((card.globalShape.visible = true), card.globalShape),
+          card.milestoneLine, // <-- your toggle
+        ]
+      : [
+          card.useIcons,
+          card.showLabels,
+          card.applyToAll,
+          ...perType,
+          card.milestoneLine, // <-- your toggle
+        ];
+  }
+
+  private configureLegendCard() {
+    const s = this.formattingSettings;
+    if (
+      this.viewModel &&
+      !this.viewModel.isDurationFilled &&
+      !this.viewModel.isEndDateFilled
+    ) {
+      return;
+    }
+    const dataPoints = this.viewModel?.legendData?.dataPoints;
+    if (!dataPoints?.length) return;
+    s.populateLegend(dataPoints, this.localizationManager);
+  }
+
+  private configureTaskResourceCard() {
+    const s = this.formattingSettings;
+    if (!this.viewModel.isResourcesFilled) {
+      s.taskResourceCardSettings.visible = false;
+    }
+  }
+
+  private configureTooltipCard() {
+    const s = this.formattingSettings;
+    const mode = s.tooltipConfigCardSettings.mode.value as any;
+    if (mode?.value === "off") {
+      s.tooltipConfigCardSettings.slices = [s.tooltipConfigCardSettings.mode];
+    }
   }
 }

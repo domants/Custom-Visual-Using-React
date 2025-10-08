@@ -171,6 +171,12 @@ export class GeneralCardSettings extends Card {
     value: false,
   });
 
+  todayLine = new formattingSettings.ToggleSwitch({
+    name: "todayLine",
+    displayNameKey: "Visual_Milestone_ShowTodayLine",
+    value: true,
+  });
+
   name: string = "general";
   displayNameKey: string = "Visual_General";
   slices = [
@@ -181,6 +187,7 @@ export class GeneralCardSettings extends Card {
     this.durationMin,
     this.barsRoundedCorners,
     this.fullDayBars,
+    this.todayLine,
   ];
 }
 
@@ -389,6 +396,12 @@ export class MilestonesCardSettings extends Card {
     value: false,
   });
 
+  milestoneLine = new formattingSettings.ToggleSwitch({
+    name: "milestoneLine",
+    displayNameKey: "Visual_Milestone_ShowMilestoneLine",
+    value: false,
+  });
+
   name: string = "milestones";
   displayNameKey: string = "Visual_Milestones";
 
@@ -403,7 +416,8 @@ export class MilestonesCardSettings extends Card {
     this.roundedBars,
     this.useLegendColorForBars,
     this.showResourceOnBars,
-    this.resourceInitialOnly, // <- make sure this is present
+    this.resourceInitialOnly,
+    this.milestoneLine,
   ];
 }
 
