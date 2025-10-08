@@ -3023,7 +3023,7 @@ export class Gantt implements IVisual {
             (task.index + 1) * this.getResourceLabelTopMargin() +
             (taskConfigHeight -
               this.viewModel.settings.categorySettings.fontSize.value) /
-              2
+              2.25
         )
         .attr("width", () => (displayGridLines ? this.viewport.width : 0))
         .attr("height", 1)
