@@ -37,6 +37,28 @@ Open cmd (win + r then type cmd)
 pbiviz install-cert
 ```
 
+If you encounter an error sayong like "pbiviz is not recognized by the system as a command...." or similar to below:
+<img width="1350" height="228" alt="image" src="https://github.com/user-attachments/assets/735c82c7-578e-4eb1-8154-43fce727c903" />
+
+Use below approach:
+- open command prompt: Start -> Run -> CMD
+- change directory to npm folder to *C:\users<userid>\AppData\Roaming\npm*
+- run the command ```pbiviz --install-cert```
+
+You should be able to see this window:
+<img width="801" height="783" alt="image" src="https://github.com/user-attachments/assets/e42c59e2-626e-4017-97f5-4fb135f14a4a" />
+
+Go to this folder mentioed below and click **Next**
+<img width="801" height="783" alt="image" src="https://github.com/user-attachments/assets/dcf85bc0-c53e-479b-bb29-ef8d65a35da0" />
+
+And enter the password generated from above folder:
+<img width="801" height="783" alt="image" src="https://github.com/user-attachments/assets/2b80c6e6-9816-4bc4-8fd3-4ba5c0b5514f" />
+
+
+
+
+
+
 If you encounter the `pwsh is not recognized` error, run below command:
 
 ```bash
@@ -83,7 +105,7 @@ git clone https://github.com/domants/Custom-Visual-Using-React.git
 ## Install Dependencies
 ### cd to your root folder and run the below command to install required packages.
 
-Global Installation (CLI Tool)
+Global Installation (CLI Tool) - You need to run this outside your root folder to install it globally.
 ```
 npm install -g powerbi-visuals-tools
 ```
