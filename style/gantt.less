@@ -115,31 +115,23 @@
 // }
 
 /* Text next to icon when Use Milestone Icon = OFF (1-day bars) */
-// .gantt .task text.milestone-resource {
-//   transform: translateX(-5px);
-//   font-weight: 500 !important;
-//   font-size: 12px !important;
-//   fill: #7a3e3e !important;
-// }
+.gantt .task text.milestone-resource {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  fill: #000000 !important;
+}
 
 /* Text next to icon when Use Milestone Icon = ON */
-// .gantt .task text.milestone-legend {
-//   transform: translateX(-25px);
-//   font-size: 13px !important;
-//   fill: #5e5e5e !important;
-// }
+.gantt .task text.milestone-legend {
+  transform: translateX(-25px);
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  fill: #000000 !important;
+}
 
 /* ======================================================================================================================================= */
 
-.row-bg-rect {
-  pointer-events: none; /* avoids blocking clicks */
-  shape-rendering: crispEdges;
-  /* fill and opacity can be overridden here if you don’t want to set them inline */
-  /* fill: #FFF9D6; */
-  /* opacity: 1; */
-}
-
-/* Scaling of bars */
+/* Broadness of bars */
 .gantt {
   --task-bar-scale-y: 0.9; // broadness of non-milestone bars
   --milestone-bar-scale-y: 0.9; // broadness of milestone bars
@@ -163,17 +155,3 @@
 .milestone-as-bar {
   vector-effect: non-scaling-stroke;
 }
-
-/* Ensure centered anchor when position = Inside */
-// .gantt {
-//   .task text.task-resource,
-//   .task text.milestone-resource {
-//     /* These only matter if the TS set x/y to the midpoint */
-//     text-anchor: middle;
-//     dominant-baseline: inherit;
-//     alignment-baseline: central;
-
-//     pointer-events: none;
-//     user-select: none;
-//   }
-// }

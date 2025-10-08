@@ -3319,49 +3319,7 @@ export class Gantt implements IVisual {
       .remove();
   }
 
-  // private getMsResPositioners(cfg: {
-  //   pos: ResourceLabelPosition;
-  //   fontPx: number;
-  //   fontPt: number;
-  //   taskConfigHeight: number;
-  // }) {
-  //   const { pos, fontPx, taskConfigHeight } = cfg;
-
-  //   const xForMilestone = (start: Date, end: Date): number => {
-  //     switch (pos) {
-  //       case ResourceLabelPosition.Right:
-  //         return (
-  //           (this.hasNotNullableDates ? Gantt.TimeScale(end) : 0) +
-  //           fontPx / 2 +
-  //           Gantt.RectRound
-  //         );
-  //       case ResourceLabelPosition.Top:
-  //         return (
-  //           (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
-  //           Gantt.RectRound
-  //         );
-  //       case ResourceLabelPosition.Inside:
-  //       default: {
-  //         const x0 = this.hasNotNullableDates ? Gantt.TimeScale(start) : 0;
-  //         const w = this.hasNotNullableDates
-  //           ? Gantt.taskDurationToWidth(start, end)
-  //           : 0;
-  //         return (
-  //           x0 +
-  //           w / (2 * Gantt.ResourceLabelDefaultDivisionCoefficient) +
-  //           Gantt.RectRound
-  //         );
-  //       }
-  //     }
-  //   };
-
-  //   const yForMilestone = (row: number): number =>
-  //     Gantt.getBarYCoordinate(row, taskConfigHeight) +
-  //     Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, pos) +
-  //     (row + 1) * this.getResourceLabelTopMargin();
-
-  //   return { xForMilestone, yForMilestone };
-  // }
+  PADDING_TEXT_INSIDE_BAR = 10; // 10 px
 
   private getMsResPositioners(cfg: {
     pos: ResourceLabelPosition;
@@ -3379,19 +3337,19 @@ export class Gantt implements IVisual {
             fontPx / 2 +
             Gantt.RectRound
           );
+
         case ResourceLabelPosition.Top:
           return (
             (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
             Gantt.RectRound
           );
+
         case ResourceLabelPosition.Inside:
-        default: {
-          // keep your existing X logic; vertical centering is handled via Y
+        default:
           return (
             (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
-            Gantt.RectRound
+            this.PADDING_TEXT_INSIDE_BAR // 10px
           );
-        }
       }
     };
 
@@ -3429,17 +3387,19 @@ export class Gantt implements IVisual {
     yForMilestone: (row: number) => number
   ) {
     merged
+      .classed("pos-inside", cfg.pos === ResourceLabelPosition.Inside)
       .attr("x", (d: any) => xForMilestone(d.start, d.end))
       .attr("y", (d: any) => yForMilestone(d.row))
-      .attr(
-        "text-anchor",
-        cfg.pos === ResourceLabelPosition.Inside ? "middle" : "start"
-      )
+      .attr("text-anchor", "start")
       .style("fill", cfg.fillColor)
       .style("font-size", PixelConverter.fromPoint(cfg.fontPt))
       .style(
         "alignment-baseline",
         cfg.pos === ResourceLabelPosition.Inside ? "central" : "auto"
+      )
+      .attr(
+        "dominant-baseline",
+        cfg.pos === ResourceLabelPosition.Inside ? "central" : null
       )
       .text((d: any) => {
         const txt = (d.resource || "").trim();
@@ -4661,7 +4621,7 @@ export class Gantt implements IVisual {
         return Gantt.TimeScale(task.start) + Gantt.RectRound;
 
       case ResourceLabelPosition.Inside: {
-        return Gantt.TimeScale(task.start) + 10; // 10px
+        return Gantt.TimeScale(task.start) + this.PADDING_TEXT_INSIDE_BAR; // 10px
       }
     }
 
