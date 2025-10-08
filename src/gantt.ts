@@ -414,6 +414,7 @@ export class Gantt implements IVisual {
   private collapseAllGroup: Selection<any>;
   private axisGroup: Selection<any>;
   private chartGroup: Selection<any>;
+  private rowBgGroup: Selection<any>;
   private taskGroup: Selection<any>;
   private lineGroup: Selection<any>;
   private lineGroupWrapper: Selection<any>;
@@ -466,31 +467,36 @@ export class Gantt implements IVisual {
    */
   private createViewport(element: HTMLElement): void {
     const axisBackgroundColor: string = this.colorHelper.getThemeColor();
-    // create div container to the whole viewport area
+
+    // Root container
     this.ganttDiv = this.body.append("div").classed(Gantt.Body.className, true);
 
-    // create container to the svg area
+    // SVG
     this.ganttSvg = this.ganttDiv
       .append("svg")
       .classed(Gantt.ClassName.className, true);
 
-    // create clear catcher
+    // Clear catcher (should be first in svg so clicks fall through)
     this.clearCatcher = appendClearCatcher(this.ganttSvg);
 
-    // create chart container
+    // ===== Chart area (everything that scrolls horizontally with the time grid) =====
     this.chartGroup = this.ganttSvg
       .append("g")
       .classed(Gantt.Chart.className, true);
 
-    // create tasks container
+    // Row background layer — create ONCE and BEFORE tasks to stay underneath
+    this.rowBgGroup = this.chartGroup.append("g").classed("row-bg-group", true);
+
+    // Tasks layer on top of row backgrounds
     this.taskGroup = this.chartGroup
       .append("g")
       .classed(Gantt.Tasks.className, true);
 
-    // create axis container
+    // ===== Axis & gridlines (fixed at the top) =====
     this.axisGroup = this.ganttSvg
       .append("g")
       .classed(Gantt.AxisGroup.className, true);
+
     this.axisGroup
       .append("rect")
       .attr("width", "100%")
@@ -498,7 +504,7 @@ export class Gantt implements IVisual {
       .attr("height", "40px")
       .attr("fill", axisBackgroundColor);
 
-    // create task lines container
+    // ===== Vertical grid / left labels area (scroll-synced horizontally) =====
     this.lineGroup = this.ganttSvg
       .append("g")
       .classed(Gantt.TaskLines.className, true);
@@ -529,11 +535,12 @@ export class Gantt implements IVisual {
       .append("g")
       .classed(Gantt.CollapseAll.className, true);
 
-    // create legend container
+    // ===== Legend =====
     const interactiveBehavior: IInteractiveBehavior = this.colorHelper
       .isHighContrast
       ? new OpacityLegendBehavior()
       : null;
+
     this.legend = createLegend(
       element,
       this.isInteractiveChart,
@@ -543,29 +550,34 @@ export class Gantt implements IVisual {
       interactiveBehavior
     );
 
+    // ===== Scroll sync =====
     this.ganttDiv.on(
       "scroll",
-      (event) => {
-        if (this.viewModel) {
-          const taskLabelsWidth: number = this.viewModel.settings
-            .taskLabelsCardSettings.show.value
-            ? this.viewModel.settings.taskLabelsCardSettings.width.value
-            : 0;
+      (event: any) => {
+        if (!this.viewModel) return;
 
-          const scrollTop: number = <number>event.target.scrollTop;
-          const scrollLeft: number = <number>event.target.scrollLeft;
+        // Use the labels card you actually have in your settings model
+        const taskLabelsWidth: number = this.viewModel.settings.categorySettings
+          .show.value
+          ? this.viewModel.settings.categorySettings.width.value
+          : 0;
 
-          this.axisGroup.attr(
-            "transform",
-            SVGManipulations.translate(
-              taskLabelsWidth + this.margin.left + Gantt.SubtasksLeftMargin,
-              Gantt.TaskLabelsMarginTop + scrollTop
-            )
-          );
-          this.lineGroup
-            .attr("transform", SVGManipulations.translate(scrollLeft, 0))
-            .attr("height", 20);
-        }
+        const scrollTop: number = event.target.scrollTop as number;
+        const scrollLeft: number = event.target.scrollLeft as number;
+
+        // Keep axis fixed horizontally but follow vertical scroll
+        this.axisGroup.attr(
+          "transform",
+          SVGManipulations.translate(
+            taskLabelsWidth + this.margin.left + Gantt.SubtasksLeftMargin,
+            Gantt.TaskLabelsMarginTop + scrollTop
+          )
+        );
+
+        // Left labels/grid group scrolls horizontally
+        this.lineGroup
+          .attr("transform", SVGManipulations.translate(scrollLeft, 0))
+          .attr("height", 20);
       },
       false
     );
@@ -600,6 +612,8 @@ export class Gantt implements IVisual {
     this.chartGroup.selectAll(Gantt.TaskGroup.selectorName).remove();
 
     this.chartGroup.selectAll(Gantt.SingleTask.selectorName).remove();
+
+    this.rowBgGroup?.selectAll("*").remove();
   }
 
   /**
@@ -2497,12 +2511,11 @@ export class Gantt implements IVisual {
     axisLength = this.scaleAxisLength(axisLength);
 
     this.setDimension(groupedTasks, axisLength, settings);
-
+    this.renderParentRowBackgrounds(groupedTasks);
     this.renderTasks(groupedTasks);
-    this.updateTaskLabels(
-      groupedTasks,
-      settings.taskLabelsCardSettings.width.value
-    );
+
+    this.updateTaskLabels(groupedTasks, settings.categorySettings.width.value);
+
     this.updateElementsPositions(this.margin);
     this.createMilestoneLine(groupedTasks);
 
@@ -2677,9 +2690,7 @@ export class Gantt implements IVisual {
     const fullResourceLabelMargin =
       groupedTasks.length * this.getResourceLabelTopMargin();
     let widthBeforeConversion =
-      this.margin.left +
-      settings.taskLabelsCardSettings.width.value +
-      axisLength;
+      this.margin.left + settings.categorySettings.width.value + axisLength;
 
     if (
       settings.taskResourceCardSettings.show.value &&
@@ -2838,15 +2849,15 @@ export class Gantt implements IVisual {
   private updateTaskLabels(tasks: GroupedTask[], width: number): void {
     let axisLabel: Selection<any>;
     const taskLabelsShow: boolean =
-      this.viewModel.settings.taskLabelsCardSettings.show.value;
+      this.viewModel.settings.categorySettings.show.value;
     const displayGridLines: boolean =
       this.viewModel.settings.generalCardSettings.displayGridLines.value;
     const taskLabelsColor: string =
-      this.viewModel.settings.taskLabelsCardSettings.fill.value.value;
+      this.viewModel.settings.categorySettings.fill.value.value;
     const taskLabelsFontSize: number =
-      this.viewModel.settings.taskLabelsCardSettings.fontSize.value;
+      this.viewModel.settings.categorySettings.fontSize.value;
     const taskLabelsWidth: number =
-      this.viewModel.settings.taskLabelsCardSettings.width.value;
+      this.viewModel.settings.categorySettings.width.value;
     const taskConfigHeight: number =
       this.viewModel.settings.taskConfigCardSettings.height.value ||
       DefaultChartLineHeight;
@@ -3011,7 +3022,7 @@ export class Gantt implements IVisual {
           (task: GroupedTask) =>
             (task.index + 1) * this.getResourceLabelTopMargin() +
             (taskConfigHeight -
-              this.viewModel.settings.taskLabelsCardSettings.fontSize.value) /
+              this.viewModel.settings.categorySettings.fontSize.value) /
               2
         )
         .attr("width", () => (displayGridLines ? this.viewport.width : 0))
@@ -3044,8 +3055,8 @@ export class Gantt implements IVisual {
 
     if (this.viewModel.isParentFilled) {
       const categoryLabelsWidth: number = this.viewModel.settings
-        .taskLabelsCardSettings.show.value
-        ? this.viewModel.settings.taskLabelsCardSettings.width.value
+        .categorySettings.show.value
+        ? this.viewModel.settings.categorySettings.width.value
         : 0;
 
       this.collapseAllGroup
@@ -3446,6 +3457,126 @@ export class Gantt implements IVisual {
     });
     this.styleAndTextMsRes(merged, cfg, xForMilestone, yForMilestone);
     this.clipMsResIfNeeded(merged, cfg);
+  }
+
+  /**
+   * Paint a background color on rows that are "parent" swimlanes.
+   * Uses full row height (from gridline to gridline), not just bar height.
+   */
+  // private renderParentRowBackgrounds(groupedTasks: GroupedTask[]): void {
+  //   this.rowBgGroup.selectAll("rect.row-bg-rect").remove();
+
+  //   const color =
+  //     this.viewModel?.settings?.categorySettings?.parentSwimlaneFill?.value
+  //       ?.value;
+  //   if (!this.hasNotNullableDates || !color) return;
+
+  //   // full time-axis width
+  //   const range = (Gantt.TimeScale as any)?.range?.();
+  //   const width = Array.isArray(range) ? range[1] : 0;
+
+  //   // row sizing
+  //   const rowH =
+  //     this.viewModel.settings.taskConfigCardSettings.height.value ||
+  //     DefaultChartLineHeight;
+  //   const barH = Gantt.getBarHeight(rowH);
+
+  //   // parents only (first task has children)
+  //   const parents = groupedTasks.filter(
+  //     (gt) => !!gt?.tasks?.[0]?.children?.length
+  //   );
+
+  //   const sel = this.rowBgGroup
+  //     .selectAll<SVGRectElement, GroupedTask>("rect.row-bg-rect")
+  //     .data(parents, (d: any) => d?.index);
+
+  //   sel
+  //     .enter()
+  //     .append("rect")
+  //     .classed("row-bg-rect", true)
+  //     .merge(sel as any)
+  //     .attr("x", 0)
+  //     // compute the bar's Y (the centered bar) then expand to full row:
+  //     .attr("y", (gt: GroupedTask) => {
+  //       const barY =
+  //         Gantt.getBarYCoordinate(gt.index, rowH) +
+  //         (gt.index + 1) * this.getResourceLabelTopMargin();
+  //       const rowTop = barY - (rowH - barH) / 2; // move up to the row's top
+  //       return rowTop;
+  //     })
+  //     .attr("width", width)
+  //     .attr("height", rowH) // full row height between grid lines
+  //     .attr("fill", color)
+  //     .lower();
+
+  //   sel.exit().remove();
+  // }
+
+  /**
+   * Paint a background color on parent rows that spans the full swimlane:
+   * label pane (left) + time grid (right).
+   */
+  private renderParentRowBackgrounds(groupedTasks: GroupedTask[]): void {
+    // Clear previous
+    this.rowBgGroup.selectAll("rect.row-bg-rect").remove();
+
+    const color =
+      this.viewModel?.settings?.categorySettings?.parentSwimlaneFill?.value
+        ?.value;
+    if (!this.hasNotNullableDates || !color) return;
+
+    // --- Widths ---
+    // Time grid width (from the time scale)
+    const rng = (Gantt.TimeScale as any)?.range?.();
+    const timeW =
+      Array.isArray(rng) && rng.length >= 2 ? Math.max(0, rng[1] - rng[0]) : 0;
+
+    // Label pane + gutters used in your transforms
+    const labelPaneW =
+      (this.viewModel.settings.categorySettings.show.value
+        ? this.viewModel.settings.categorySettings.width.value
+        : 0) +
+      this.margin.left +
+      Gantt.SubtasksLeftMargin;
+
+    // Total row span we want to cover (starts before chartGroup origin)
+    const totalW = labelPaneW + timeW;
+
+    // --- Vertical sizing (same band as your gridlines) ---
+    const rowH =
+      this.viewModel.settings.taskConfigCardSettings.height.value ||
+      DefaultChartLineHeight;
+    const barH = Gantt.getBarHeight(rowH);
+
+    // Parent rows only (a parent has children on its first task)
+    const parents = groupedTasks.filter(
+      (gt) => !!gt?.tasks?.[0]?.children?.length
+    );
+
+    const sel = this.rowBgGroup
+      .selectAll<SVGRectElement, GroupedTask>("rect.row-bg-rect")
+      .data(parents, (d: any) => d?.index);
+
+    sel
+      .enter()
+      .append("rect")
+      .classed("row-bg-rect", true)
+      .merge(sel as any)
+      // Shift left so the fill includes the label pane
+      .attr("x", -labelPaneW)
+      // Use the bar's Y then expand to full row band
+      .attr("y", (gt: GroupedTask) => {
+        const barY =
+          Gantt.getBarYCoordinate(gt.index, rowH) +
+          (gt.index + 1) * this.getResourceLabelTopMargin();
+        return barY - (rowH - barH) / 2;
+      })
+      .attr("width", totalW)
+      .attr("height", rowH)
+      .attr("fill", color)
+      .lower();
+
+    sel.exit().remove();
   }
 
   private renderTasks(groupedTasks: GroupedTask[]): void {
@@ -4429,7 +4560,7 @@ export class Gantt implements IVisual {
    */
   private getTaskLabelCoordinateY(taskIndex: number): number {
     const settings = this.viewModel.settings;
-    const fontSize: number = +settings.taskLabelsCardSettings.fontSize.value;
+    const fontSize: number = +settings.categorySettings.fontSize.value;
     const taskConfigHeight =
       settings.taskConfigCardSettings.height.value || DefaultChartLineHeight;
     const taskYCoordinate = taskConfigHeight * taskIndex;
@@ -4770,8 +4901,8 @@ export class Gantt implements IVisual {
 
   private updateElementsPositions(margin: IMargin): void {
     const settings: GanttChartSettingsModel = this.viewModel.settings;
-    const taskLabelsWidth: number = settings.taskLabelsCardSettings.show.value
-      ? settings.taskLabelsCardSettings.width.value
+    const taskLabelsWidth: number = settings.categorySettings.show.value
+      ? settings.categorySettings.width.value
       : 0;
 
     let translateXValue: number =

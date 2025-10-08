@@ -436,7 +436,7 @@ export class MilestonesCardSettings extends Card {
   ];
 }
 
-export class TaskLabelsCardSettings extends Card {
+export class CategorySettings extends Card {
   show = new formattingSettings.ToggleSwitch({
     name: "show",
     displayNameKey: "Visual_Show",
@@ -473,9 +473,15 @@ export class TaskLabelsCardSettings extends Card {
     },
   });
 
-  name: string = "taskLabels";
-  displayNameKey: string = "Visual_CategoryLabels";
-  slices = [this.fill, this.fontSize, this.width];
+  parentSwimlaneFill = new formattingSettings.ColorPicker({
+    name: "parentSwimlaneFill",
+    displayNameKey: "Visual_General_ParentSwimlane_Fill",
+    value: { value: "#FFF9D6" },
+  });
+
+  name: string = "categorySettings";
+  displayNameKey: string = "Visual_CategorySettings";
+  slices = [this.fill, this.fontSize, this.width, this.parentSwimlaneFill];
   topLevelSlice?: formattingSettings.SimpleSlice<any> = this.show;
 }
 
@@ -497,103 +503,6 @@ export class TaskCompletionCardSettings extends Card {
   slices = [this.maxCompletion];
   topLevelSlice?: formattingSettings.SimpleSlice<any> = this.show;
 }
-
-// export class TooltipConfigCardSettings extends Card {
-//   dateFormat = new formattingSettings.TextInput({
-//     name: "dateFormat",
-//     displayNameKey: "Visual_TooltipSettings_DateFormat",
-//     placeholder: "",
-//     value: "",
-//   });
-
-//   // Use the formatting model’s dropdown/toggle components you actually import (see next issue)
-//   mode = new formattingSettings.ItemDropdown({
-//     name: "mode",
-//     displayNameKey: "Tooltip_Mode",
-//     items: [
-//       { value: "all", displayName: "All" },
-//       { value: "dates-only", displayName: "Dates only" },
-//       { value: "off", displayName: "Off" },
-//     ],
-//     value: { value: "all", displayName: "All" },
-//   });
-
-//   showLegend = new formattingSettings.ToggleSwitch({
-//     name: "showLegend",
-//     displayNameKey: "Tooltip_Show_Legend",
-//     value: true,
-//   });
-//   showTaskName = new formattingSettings.ToggleSwitch({
-//     name: "showTaskName",
-//     displayNameKey: "Tooltip_Show_Task",
-//     value: true,
-//   });
-//   showStart = new formattingSettings.ToggleSwitch({
-//     name: "showStart",
-//     displayNameKey: "Tooltip_Show_StartDate",
-//     value: true,
-//   });
-//   showEnd = new formattingSettings.ToggleSwitch({
-//     name: "showEnd",
-//     displayNameKey: "Tooltip_Show_EndDate",
-//     value: true,
-//   });
-//   showDuration = new formattingSettings.ToggleSwitch({
-//     name: "showDuration",
-//     displayNameKey: "Tooltip_Show_Duration",
-//     value: true,
-//   });
-//   showCompletion = new formattingSettings.ToggleSwitch({
-//     name: "showCompletion",
-//     displayNameKey: "Tooltip_Show_Completion",
-//     value: true,
-//   });
-//   showResource = new formattingSettings.ToggleSwitch({
-//     name: "showResource",
-//     displayNameKey: "Tooltip_Show_Resource",
-//     value: true,
-//   });
-//   showExtraInfo = new formattingSettings.ToggleSwitch({
-//     name: "showExtraInfo",
-//     displayNameKey: "Tooltip_Show_Extra",
-//     value: true,
-//   });
-
-//   showMilestoneType = new formattingSettings.ToggleSwitch({
-//     name: "showMilestoneType",
-//     displayNameKey: "Tooltip_Show_MilestoneType",
-//     value: true,
-//   });
-//   showMilestoneName = new formattingSettings.ToggleSwitch({
-//     name: "showMilestoneName",
-//     displayNameKey: "Tooltip_Show_MilestoneName",
-//     value: true,
-//   });
-//   showMilestoneDate = new formattingSettings.ToggleSwitch({
-//     name: "showMilestoneDate",
-//     displayNameKey: "Tooltip_Show_MilestoneDate",
-//     value: true,
-//   });
-
-//   name = "tooltipConfig";
-//   displayNameKey = "Tooltip_Card_Title";
-
-//   slices = [
-//     this.mode,
-//     this.dateFormat,
-//     this.showLegend,
-//     this.showTaskName,
-//     this.showStart,
-//     this.showEnd,
-//     this.showDuration,
-//     this.showCompletion,
-//     this.showResource,
-//     this.showExtraInfo,
-//     this.showMilestoneType,
-//     this.showMilestoneName,
-//     this.showMilestoneDate,
-//   ];
-// }
 
 export class TooltipConfigCardSettings extends Card {
   dateFormat = new formattingSettings.TextInput({
@@ -823,7 +732,7 @@ export class GanttChartSettingsModel extends Model {
   daysOffCardSettings = new DaysOffCardSettings();
   legendCardSettings = new LegendCardSettings();
   milestonesCardSettings = new MilestonesCardSettings();
-  taskLabelsCardSettings = new TaskLabelsCardSettings();
+  categorySettings = new CategorySettings();
   taskCompletionCardSettings = new TaskCompletionCardSettings();
   tooltipConfigCardSettings = new TooltipConfigCardSettings();
   taskConfigCardSettings = new TaskConfigCardSettings();
@@ -837,7 +746,7 @@ export class GanttChartSettingsModel extends Model {
     this.daysOffCardSettings,
     this.legendCardSettings,
     this.milestonesCardSettings,
-    this.taskLabelsCardSettings,
+    this.categorySettings,
     this.taskCompletionCardSettings,
     this.tooltipConfigCardSettings,
     this.taskConfigCardSettings,

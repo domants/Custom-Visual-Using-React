@@ -548,7 +548,7 @@
         }
       }
     },
-    "taskLabels": {
+    "categorySettings": {
       "properties": {
         "show": {
           "type": {
@@ -575,6 +575,10 @@
           "type": {
             "numeric": true
           }
+        },
+        "parentSwimlaneFill": {
+          "displayNameKey": "Visual_General_ParentSwimlane_Fill",
+          "type": { "fill": { "solid": { "color": true } } }
         }
       }
     },
