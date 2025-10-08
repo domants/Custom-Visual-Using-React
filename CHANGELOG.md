@@ -1,3 +1,7 @@
+## 1.0.0.2
+
+- Added `Full Day Bars` toggle for non-milestone bars — `visually extends the bar by one day` (e.g., end date is Oct 10, 2025, bar extends to Oct 11, 2025) without changing the actual end date value.
+
 ## 1.0.0.1
 
 - Added a toggle to enable rounded corners for milestone bars.

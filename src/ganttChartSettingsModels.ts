@@ -165,6 +165,12 @@ export class GeneralCardSettings extends Card {
     value: true,
   });
 
+  fullDayBars = new formattingSettings.ToggleSwitch({
+    name: "fullDayBars",
+    displayNameKey: "Visual_Full_Day_Bars_ForTasks",
+    value: false,
+  });
+
   name: string = "general";
   displayNameKey: string = "Visual_General";
   slices = [
@@ -174,6 +180,7 @@ export class GeneralCardSettings extends Card {
     this.durationUnit,
     this.durationMin,
     this.barsRoundedCorners,
+    this.fullDayBars,
   ];
 }
 

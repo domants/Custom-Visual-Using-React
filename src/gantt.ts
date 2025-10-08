@@ -643,6 +643,20 @@ export class Gantt implements IVisual {
     return v != null ? String(v) : "";
   }
 
+  private getVisualEndForTask(task: Task): Date {
+    const enableFullDay =
+      !!this.viewModel?.settings?.generalCardSettings?.fullDayBars?.value;
+
+    // Only apply to NON-milestone bars
+    const isNonMilestone = !task?.Milestones || task.Milestones.length === 0;
+
+    if (enableFullDay && isNonMilestone && task?.end instanceof Date) {
+      // Normalize to [00:00, next 00:00) of the task's end date
+      return Gantt.daySpan(task.end).end; // i.e., +1 day at 00:00
+    }
+    return task?.end;
+  }
+
   public static getTooltipInfo(
     task: Task,
     fmt: GanttChartFormatters,
@@ -3582,13 +3596,19 @@ export class Gantt implements IVisual {
   /**
    * @param task
    */
+
   private getTaskRectWidth(task: Task): number {
     const taskIsCollapsed = this.collapsedTasks.includes(task.name);
 
-    return this.hasNotNullableDates &&
-      (taskIsCollapsed || lodashIsEmpty(task.Milestones))
-      ? Gantt.taskDurationToWidth(task.start, task.end)
-      : 0;
+    if (!this.hasNotNullableDates) return 0;
+
+    // Non-milestone bars (or collapsed parents) get drawn; use visual end if toggle is on
+    if (taskIsCollapsed || lodashIsEmpty(task.Milestones)) {
+      const visualEnd = this.getVisualEndForTask(task) || task.end;
+      return Gantt.taskDurationToWidth(task.start, visualEnd);
+    }
+
+    return 0;
   }
 
   /**

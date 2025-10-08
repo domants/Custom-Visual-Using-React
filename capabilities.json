@@ -320,6 +320,10 @@
           "type": {
             "bool": true
           }
+        },
+        "fullDayBars": {
+          "displayNameKey": "Visual_Full_Day_Bars_ForTasks",
+          "type": { "bool": true }
         }
       }
     },
