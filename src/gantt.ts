@@ -2376,11 +2376,9 @@ export class Gantt implements IVisual {
   }
 
   private safeX(d: Date | number): number {
-    const t =
-      this.hasNotNullableDates && Gantt.TimeScale
-        ? Gantt.TimeScale(d as any)
-        : 0;
-    return Number.isFinite(t) ? t : 0;
+    if (!this.hasNotNullableDates || !Gantt.TimeScale) return 0;
+    const v = Gantt.TimeScale(d as any);
+    return Number.isFinite(v) ? v : 0;
   }
 
   private updateInternal(options: VisualUpdateOptions): void {
@@ -4403,96 +4401,42 @@ export class Gantt implements IVisual {
     }
   }
 
-  // Default order (used only if the text box is empty)
-  private static readonly DefaultLegendOrder: readonly string[] = [
-    "Pre-Rehearsal Activities",
-    "Rehearsal",
-    "Post-Rehearsal Activities",
-    "Pre-Cutover Activities",
-    "Cutover",
-    "Post-Cutover Activities",
-    "Public/Local Holiday",
-    "Other",
-  ] as const;
-
-  // private static getLegendOrderFromSettings(
-  //   settings: GanttChartSettingsModel
-  // ): string[] {
-  //   const raw = (settings?.legendCardSettings as any)?.legendSortOrder
-  //     ?.value as string | undefined;
-  //   if (!raw || !raw.trim()) return Array.from(Gantt.DefaultLegendOrder);
-
-  //   return raw
-  //     .split(/[;,|\n]/g)
-  //     .map((s) => s.trim())
-  //     .filter(Boolean);
-  // }
-
   private static getLegendOrderFromSettings(
     s: GanttChartSettingsModel
   ): string[] {
     const raw = s?.legendCardSettings?.legendSortOrder?.value as
       | string
-      | undefined; // the variable
-    // (its .name is 'customOrder' so it maps to capabilities)
-    if (!raw) return [];
+      | undefined;
+    if (!raw || !raw.trim()) return []; // empty - no custom sort
     return raw
       .split(/[;,|\n]/g)
       .map((x) => x.trim())
       .filter(Boolean);
   }
 
-  // private static sortLegendDataPoints(
-  //   legendData: LegendData,
-  //   targetOrder: string[]
-  // ): void {
-  //   if (!legendData?.dataPoints?.length) return;
-
-  //   // Case-insensitive mapping: input may vary in capitalization
-  //   const indexByLower = new Map<string, number>(
-  //     targetOrder.map((name, i) => [name.toLowerCase(), i])
-  //   );
-
-  //   legendData.dataPoints.sort((a, b) => {
-  //     const al = (a.label || "").toLowerCase();
-  //     const bl = (b.label || "").toLowerCase();
-  //     const ai = indexByLower.has(al)
-  //       ? indexByLower.get(al)!
-  //       : Number.MAX_SAFE_INTEGER;
-  //     const bi = indexByLower.has(bl)
-  //       ? indexByLower.get(bl)!
-  //       : Number.MAX_SAFE_INTEGER;
-
-  //     if (ai !== bi) return ai - bi;
-
-  //     // For labels not present in the custom list, keep deterministic order
-  //     return (a.label || "").localeCompare(b.label || "");
-  //   });
-  // }
-
   private static sortLegendDataPoints(legend: LegendData, order: string[]) {
-    if (!legend?.dataPoints?.length || !order.length) return;
+    if (!legend?.dataPoints?.length || !order.length) return; // skip if no custom order
     const pos = new Map(order.map((v, i) => [v.toLowerCase(), i]));
     legend.dataPoints.sort((a, b) => {
-      const ia = pos.has(a.label?.toLowerCase() ?? "")
-        ? pos.get(a.label!.toLowerCase())!
+      const ia = pos.has((a.label ?? "").toLowerCase())
+        ? pos.get((a.label ?? "").toLowerCase())!
         : 1e9;
-      const ib = pos.has(b.label?.toLowerCase() ?? "")
-        ? pos.get(b.label!.toLowerCase())!
+      const ib = pos.has((b.label ?? "").toLowerCase())
+        ? pos.get((b.label ?? "").toLowerCase())!
         : 1e9;
       return ia !== ib ? ia - ib : (a.label || "").localeCompare(b.label || "");
     });
   }
 
   private static ResourceFontColorByLegend: Record<string, string> = {
-    // Cutover: "#FFFFFF",
+    // Cutover: "#FFFFFF", -> moved to css styling
     // Rehearsal: "#21CA21",
-    "Pre-Rehearsal Activities": "#944242ff",
-    "Post-Rehearsal Activities": "#131313ff",
-    "Pre-Cutover Activities": "#B45309",
-    "Post-Cutover Activities": "#000000ff",
-    "Public/Local Holiday": "#28d31167",
-    Other: "#292929ff",
+    "Pre-Rehearsal Activities": "#000000",
+    "Post-Rehearsal Activities": "#FFFFFF",
+    "Pre-Cutover Activities": "#000000",
+    "Post-Cutover Activities": "#000000",
+    "Public/Local Holiday": "#000000",
+    Other: "#000000",
   };
 
   private getResourceFontColor(task: Task, fallbackHex: string): string {
@@ -4791,8 +4735,12 @@ export class Gantt implements IVisual {
    * @param start The start of task to convert
    * @param end The end of task to convert
    */
+
   private static taskDurationToWidth(start: Date, end: Date): number {
-    return Gantt.TimeScale(end) - Gantt.TimeScale(start);
+    if (!Gantt.TimeScale) return 0;
+    const a = Gantt.TimeScale(end);
+    const b = Gantt.TimeScale(start);
+    return Number.isFinite(a - b) ? a - b : 0;
   }
 
   private static daySpan(date: Date): { start: Date; end: Date } {
@@ -5043,15 +4991,6 @@ export class Gantt implements IVisual {
     );
   }
 
-  // private getMilestoneLineLength(numOfTasks: number): number {
-  //   return (
-  //     numOfTasks *
-  //     ((this.viewModel.settings.taskConfigCardSettings.height.value ||
-  //       DefaultChartLineHeight) +
-  //       ((1 + numOfTasks) * this.getResourceLabelTopMargin()) / 2)
-  //   );
-  // }
-
   private getMilestoneLineLength(numRows: number): number {
     const rowH =
       this.viewModel.settings.taskConfigCardSettings.height.value ||
@@ -5075,22 +5014,18 @@ export class Gantt implements IVisual {
   ): void {
     if (!Array.isArray(tasks) || !tasks.length) return;
 
-    // Find the *lowest* unit we actually used on any task
-    // (some tasks may have had to be downgraded to display fractional durations cleanly)
     let lowestUnit: DurationUnit = durationUnit;
     let maxStepDown = 0;
 
     for (const t of tasks) {
       if (!t) continue;
-      // stepDurationTransformation is how many steps we moved *down* from the visual’s unit
-      // (Day→Hour→Minute→Second).
+
       const step = Math.max(0, t.stepDurationTransformation || 0);
       maxStepDown = Math.max(maxStepDown, step);
     }
 
     if (maxStepDown <= 0) return; // nothing to do
 
-    // Walk the enum “down” maxStepDown steps
     const order: DurationUnit[] = [
       DurationUnit.Second,
       DurationUnit.Minute,
@@ -5103,19 +5038,6 @@ export class Gantt implements IVisual {
 
     if (lowestUnit === durationUnit) return;
 
-    // Convert *all* task durations to the final lowest unit so everything is consistent.
-    const toMs = (v: number, u: DurationUnit) => {
-      switch (u) {
-        case DurationUnit.Second:
-          return v * 1000;
-        case DurationUnit.Minute:
-          return v * 60 * 1000;
-        case DurationUnit.Hour:
-          return v * 60 * 60 * 1000;
-        default:
-          return v * 24 * 60 * 60 * 1000; // Day
-      }
-    };
     const fromMs = (ms: number, u: DurationUnit) => {
       switch (u) {
         case DurationUnit.Second:
@@ -5143,7 +5065,6 @@ export class Gantt implements IVisual {
     const m = this.formattingSettings.milestonesCardSettings;
 
     // Localize globalShape dropdown items
-
     const items = [
       {
         value: "Flag",
