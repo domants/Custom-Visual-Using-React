@@ -3,7 +3,10 @@
 - Added `Full Day Bars` toggle for non-milestone bars — `visually extends the bar by one day` (e.g., end date is Oct 10, 2025, bar extends to Oct 11, 2025) without changing the actual end date value.
 - Added a toggle to show vertical lines for milestone and today (available under the General and Milestone cards)
 - Added a color picker to customize the color of the Today and Milestone vertical lines.
-- Added a color picker under Category Settings Card to select Background fill
+- Added a color picker under Category Settings Card to select Background fill.
+- Aligned grid lines with bars.
+- Adjusted CSS styling to modify bar thickness.
+- Added conditional styling for font colors based on legend values via the `ResourceFontColorByLegend` method.
 
 ## 1.0.0.1
 

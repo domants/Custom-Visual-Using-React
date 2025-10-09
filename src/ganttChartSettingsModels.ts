@@ -381,6 +381,18 @@ export class MilestonesCardSettings extends Card {
     value: true,
   });
 
+  milestoneLine = new formattingSettings.ToggleSwitch({
+    name: "milestoneLine",
+    displayNameKey: "Visual_Milestone_ShowMilestoneLine",
+    value: false,
+  });
+
+  milestoneLineColor = new formattingSettings.ColorPicker({
+    name: "milestoneLineColor",
+    displayNameKey: "Visual_Milestone_TodayLineColor",
+    value: { value: "#000000ff" },
+  });
+
   roundedBars = new formattingSettings.ToggleSwitch({
     name: "roundedBars",
     displayNameKey: "Visual_Milestone_RoundedBars",
@@ -405,18 +417,6 @@ export class MilestonesCardSettings extends Card {
     value: false,
   });
 
-  milestoneLine = new formattingSettings.ToggleSwitch({
-    name: "milestoneLine",
-    displayNameKey: "Visual_Milestone_ShowMilestoneLine",
-    value: false,
-  });
-
-  milestoneLineColor = new formattingSettings.ColorPicker({
-    name: "milestoneLineColor",
-    displayNameKey: "Visual_Milestone_TodayLineColor",
-    value: { value: "#000000ff" },
-  });
-
   name: string = "milestones";
   displayNameKey: string = "Visual_Milestones";
 
@@ -428,12 +428,12 @@ export class MilestonesCardSettings extends Card {
     this.applyToAll,
     this.globalShape,
     this.useIcons,
+    this.milestoneLine,
+    this.milestoneLineColor,
     this.roundedBars,
     this.useLegendColorForBars,
     this.showResourceOnBars,
     this.resourceInitialOnly,
-    this.milestoneLine,
-    this.milestoneLineColor,
   ];
 }
 

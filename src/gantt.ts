@@ -501,7 +501,7 @@ export class Gantt implements IVisual {
       .append("rect")
       .attr("width", "100%")
       .attr("y", "-20")
-      .attr("height", "40px")
+      .attr("height", 40)
       .attr("fill", axisBackgroundColor);
 
     // ===== Vertical grid / left labels area (scroll-synced horizontally) =====
@@ -2366,9 +2366,10 @@ export class Gantt implements IVisual {
     }
 
     this.updateInternal(options);
-    const rb =
-      options?.dataViews?.[0]?.metadata?.objects?.milestones?.roundedBars;
-    console.log(`roundedBars toggled to -> ${rb}`);
+
+    // const rb =
+    //   options?.dataViews?.[0]?.metadata?.objects?.milestones?.roundedBars;
+    // console.log(`roundedBars toggled to -> ${rb}`);
   }
 
   private updateInternal(options: VisualUpdateOptions): void {
@@ -3160,8 +3161,6 @@ export class Gantt implements IVisual {
     const newId = Gantt.newUpdateId();
     this.collapsedTasksUpdateIDs.push(newId);
     this.setJsonFiltersValues(this.collapsedTasks, newId);
-
-    this.setJsonFiltersValues(this.collapsedTasks, newId);
   }
 
   /**
@@ -3196,15 +3195,8 @@ export class Gantt implements IVisual {
       drawExpandButton(collapsedAllSelector, buttonColor);
     }
 
-    // eslint-disable-next-line
-    // const newId = `${Date.now()}_${Array.from(
-    //   crypto.getRandomValues(new Uint8Array(8))
-    // )
-    //   .map((b) => b.toString(36))
-    //   .join("")}`;
     const newId = Gantt.newUpdateId();
     this.collapsedTasksUpdateIDs.push(newId);
-    this.setJsonFiltersValues(this.collapsedTasks, newId);
     this.setJsonFiltersValues(this.collapsedTasks, newId);
   }
 
@@ -3391,7 +3383,18 @@ export class Gantt implements IVisual {
       .attr("x", (d: any) => xForMilestone(d.start, d.end))
       .attr("y", (d: any) => yForMilestone(d.row))
       .attr("text-anchor", "start")
-      .style("fill", cfg.fillColor)
+      //.style("fill", cfg.fillColor)
+      .style("fill", (_d: any, _i: number, nodes: any[]) => {
+        // each node is bound to { row, start, end, resource }
+        // get the Task for that row to reuse the same logic
+        // (We can grab it via the parent selection’s data if needed; easiest is to
+        // compute from the resource text directly using the same rules.)
+        const tempTaskLike = {
+          resource: nodes[_i]?.__data__?.resource ?? "",
+          extraInformation: [],
+        } as Task;
+        return this.getResourceFontColor(tempTaskLike, cfg.fillColor);
+      })
       .style("font-size", PixelConverter.fromPoint(cfg.fontPt))
       .style(
         "alignment-baseline",
@@ -3446,6 +3449,14 @@ export class Gantt implements IVisual {
     taskConfigHeight: number
   ): void {
     const cfg = this.getMsResConfig(taskConfigHeight);
+
+    // (optional) task lookup by row so we can color by legend/task type:
+    const rowToTask = new Map<number, Task>();
+    this.taskGroup
+      .selectAll(Gantt.SingleTask.selectorName)
+      .data()
+      .forEach((t: Task) => rowToTask.set(t.index, t));
+
     if (!cfg.shouldRender) {
       taskSelection.selectAll("text.milestone-resource").remove();
       this._prevInitialsOnly = cfg.initialsOnly;
@@ -3453,7 +3464,6 @@ export class Gantt implements IVisual {
       return;
     }
 
-    // Clear stale nodes when toggles/pos changed
     if (
       this._prevInitialsOnly !== cfg.initialsOnly ||
       this._prevResourcePos !== cfg.pos
@@ -3462,6 +3472,7 @@ export class Gantt implements IVisual {
     }
     this._prevInitialsOnly = cfg.initialsOnly;
     this._prevResourcePos = cfg.pos;
+
     const { merged } = this.bindMsResNodes(taskSelection);
     this.resetClipAttrs(merged);
 
@@ -3469,62 +3480,17 @@ export class Gantt implements IVisual {
       ...cfg,
       fontPt: cfg.fontPt,
     });
+
     this.styleAndTextMsRes(merged, cfg, xForMilestone, yForMilestone);
     this.clipMsResIfNeeded(merged, cfg);
+
+    // Color by task type/legend if possible:
+    merged.style("fill", (d: any) => {
+      const task = rowToTask.get(d.row);
+      const fallback = cfg.fillColor;
+      return this.getResourceFontColor(task as Task, fallback);
+    });
   }
-
-  /**
-   * Paint a background color on rows that are "parent" swimlanes.
-   * Uses full row height (from gridline to gridline), not just bar height.
-   */
-  // private renderParentRowBackgrounds(groupedTasks: GroupedTask[]): void {
-  //   this.rowBgGroup.selectAll("rect.row-bg-rect").remove();
-
-  //   const color =
-  //     this.viewModel?.settings?.categorySettings?.parentSwimlaneFill?.value
-  //       ?.value;
-  //   if (!this.hasNotNullableDates || !color) return;
-
-  //   // full time-axis width
-  //   const range = (Gantt.TimeScale as any)?.range?.();
-  //   const width = Array.isArray(range) ? range[1] : 0;
-
-  //   // row sizing
-  //   const rowH =
-  //     this.viewModel.settings.taskConfigCardSettings.height.value ||
-  //     DefaultChartLineHeight;
-  //   const barH = Gantt.getBarHeight(rowH);
-
-  //   // parents only (first task has children)
-  //   const parents = groupedTasks.filter(
-  //     (gt) => !!gt?.tasks?.[0]?.children?.length
-  //   );
-
-  //   const sel = this.rowBgGroup
-  //     .selectAll<SVGRectElement, GroupedTask>("rect.row-bg-rect")
-  //     .data(parents, (d: any) => d?.index);
-
-  //   sel
-  //     .enter()
-  //     .append("rect")
-  //     .classed("row-bg-rect", true)
-  //     .merge(sel as any)
-  //     .attr("x", 0)
-  //     // compute the bar's Y (the centered bar) then expand to full row:
-  //     .attr("y", (gt: GroupedTask) => {
-  //       const barY =
-  //         Gantt.getBarYCoordinate(gt.index, rowH) +
-  //         (gt.index + 1) * this.getResourceLabelTopMargin();
-  //       const rowTop = barY - (rowH - barH) / 2; // move up to the row's top
-  //       return rowTop;
-  //     })
-  //     .attr("width", width)
-  //     .attr("height", rowH) // full row height between grid lines
-  //     .attr("fill", color)
-  //     .lower();
-
-  //   sel.exit().remove();
-  // }
 
   /**
    * Paint a background color on parent rows that spans the full swimlane:
@@ -3594,18 +3560,19 @@ export class Gantt implements IVisual {
   }
 
   private renderTasks(groupedTasks: GroupedTask[]): void {
-    const taskConfigHeight: number =
+    const taskConfigHeight =
       this.viewModel.settings.taskConfigCardSettings.height.value ||
       DefaultChartLineHeight;
-    const generalBarsRoundedCorners: boolean =
+
+    const generalBarsRoundedCorners =
       this.viewModel.settings.generalCardSettings.barsRoundedCorners.value;
+
     const taskGroupSelection: Selection<any> = this.taskGroup
       .selectAll(Gantt.TaskGroup.selectorName)
       .data(groupedTasks);
 
     taskGroupSelection.exit().remove();
 
-    // render task group container
     const taskGroupSelectionMerged = taskGroupSelection
       .enter()
       .append("g")
@@ -3616,25 +3583,44 @@ export class Gantt implements IVisual {
     const taskSelection: Selection<Task> = this.taskSelectionRectRender(
       taskGroupSelectionMerged
     );
+
     this.taskMainRectRender(
       taskSelection,
       taskConfigHeight,
       generalBarsRoundedCorners
     );
 
-    // Always clear whichever mode was drawn last time:
+    // ── CHANGED: respect useIcons & showLabels, and clear leftovers from other mode
     const useIcons =
       !!this.viewModel.settings.milestonesCardSettings.useIcons.value;
+    const showMsLabels =
+      !!this.viewModel.settings.milestonesCardSettings.showLabels.value;
 
     if (useIcons) {
-      // we’re rendering ICON mode, so clear BAR mode artifacts only
+      // clear bar-mode artifacts
       taskSelection.selectAll("path.milestone-as-bar").remove();
       taskSelection.selectAll("text.milestone-resource").remove();
+
+      // draw icons
       this.MilestonesRender(taskSelection, taskConfigHeight);
+
+      // labels next to icon → only when toggled ON
+      if (showMsLabels) {
+        // labels are rendered per milestone group (the <g> created in MilestonesRender)
+        const msGroups = taskSelection.selectAll(
+          Gantt.TaskMilestone.selectorName
+        );
+        this.renderMilestoneLabels(msGroups, taskConfigHeight);
+      } else {
+        // ensure no event names appear when OFF
+        taskSelection.selectAll("text.milestone-legend").remove();
+      }
     } else {
-      // we’re rendering BAR mode, so clear ICON mode artifacts only
+      // clear icon-mode artifacts
       taskSelection.selectAll(Gantt.TaskMilestone.selectorName).remove();
       taskSelection.selectAll("text.milestone-legend").remove();
+
+      // bar representation of milestones
       this.MilestonesAsBarsRender(taskSelection, taskConfigHeight);
       this.MilestoneBarResourcesRender(taskSelection, taskConfigHeight);
     }
@@ -3642,7 +3628,6 @@ export class Gantt implements IVisual {
     this.taskProgressRender(taskSelection);
     this.taskDaysOffRender(taskSelection, taskConfigHeight);
     this.taskResourceRender(taskSelection, taskConfigHeight);
-
     this.renderTooltip(taskSelection);
   }
 
@@ -4140,10 +4125,14 @@ export class Gantt implements IVisual {
         );
     }
 
-    // labels split out
-    this.renderMilestoneLabels(merged, taskConfigHeight);
-
     this.renderTooltip(selMerged);
+
+    // After selMerged (icons)
+    const resText = merged
+      .selectAll("text.milestone-resource-icon")
+      .data((m) => m.values);
+
+    resText.exit().remove();
   }
 
   /**
@@ -4415,6 +4404,27 @@ export class Gantt implements IVisual {
     }
   }
 
+  private static ResourceFontColorByLegend: Record<string, string> = {
+    // Cutover: "#FFFFFF",
+    // Rehearsal: "#21CA21",
+    "Pre-Rehearsal Activities": "#944242ff",
+    "Post-Rehearsal Activities": "#131313ff",
+    "Pre-Cutover Activities": "#B45309",
+    "Post-Cutover Activities": "#000000ff",
+    "Public/Local Holiday": "#28d31167",
+    Other: "#292929ff",
+  };
+
+  private getResourceFontColor(task: Task, fallbackHex: string): string {
+    const rawLabel = (task?.taskType ?? "").toString();
+    const key = rawLabel.trim();
+    const mapped = Gantt.ResourceFontColorByLegend[key];
+
+    const chosen = mapped || fallbackHex;
+    // Note: in High Contrast, this may still return the HC foreground color by design.
+    return this.colorHelper.getHighContrastColor("foreground", chosen);
+  }
+
   private taskResourceRender(
     taskSelection: Selection<Task>,
     taskConfigHeight: number
@@ -4478,7 +4488,11 @@ export class Gantt implements IVisual {
       .text(
         (task: Task) => (lodashIsEmpty(task.Milestones) && task.resource) || ""
       )
-      .style("fill", taskResourceColor)
+      //.style("fill", taskResourceColor)
+      .style("fill", (task: Task) =>
+        this.getResourceFontColor(task, taskResourceColor)
+      )
+
       .style("font-size", PixelConverter.fromPoint(taskResourceFontSize))
       // vertical centering only when Inside
       .style(
@@ -4551,61 +4565,9 @@ export class Gantt implements IVisual {
     return 0;
   }
 
-  // private getResourceLabelXCoordinate(
-  //   task: Task,
-  //   taskConfigHeight: number,
-  //   taskResourceFontSize: number,
-  //   taskResourcePosition: ResourceLabelPosition
-  // ): number {
-  //   if (!this.hasNotNullableDates) {
-  //     return 0;
-  //   }
-
-  //   const barHeight: number = Gantt.getBarHeight(taskConfigHeight);
-  //   switch (taskResourcePosition) {
-  //     case ResourceLabelPosition.Right:
-  //       return (
-  //         Gantt.TimeScale(task.end) +
-  //           taskResourceFontSize / 2 +
-  //           Gantt.RectRound || 0
-  //       );
-  //     case ResourceLabelPosition.Top:
-  //       return Gantt.TimeScale(task.start) + Gantt.RectRound || 0;
-  //     case ResourceLabelPosition.Inside: {
-  //       return barHeight / 2;
-  //     }
-  //   }
-  // }
-
-  // private getResourceLabelXCoordinate(
-  //   task: Task,
-  //   taskConfigHeight: number,
-  //   taskResourceFontSize: number,
-  //   taskResourcePosition: ResourceLabelPosition
-  // ): number {
-  //   if (!this.hasNotNullableDates) return 0;
-
-  //   switch (taskResourcePosition) {
-  //     case ResourceLabelPosition.Right:
-  //       return (
-  //         Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
-  //       );
-
-  //     case ResourceLabelPosition.Top:
-  //       return Gantt.TimeScale(task.start) + Gantt.RectRound;
-
-  //     case ResourceLabelPosition.Inside: {
-  //       // ✅ midpoint horizontally
-  //       const x0 = Gantt.TimeScale(task.start);
-  //       const x1 = Gantt.TimeScale(task.end);
-  //       return (x0 + x1) / 2;
-  //     }
-  //   }
-  // }
-
   private getResourceLabelXCoordinate(
     task: Task,
-    taskConfigHeight: number,
+    _taskConfigHeight: number,
     taskResourceFontSize: number,
     taskResourcePosition: ResourceLabelPosition
   ): number {
@@ -4616,16 +4578,13 @@ export class Gantt implements IVisual {
         return (
           Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
         );
-
       case ResourceLabelPosition.Top:
         return Gantt.TimeScale(task.start) + Gantt.RectRound;
-
-      case ResourceLabelPosition.Inside: {
-        return Gantt.TimeScale(task.start) + this.PADDING_TEXT_INSIDE_BAR; // 10px
-      }
+      case ResourceLabelPosition.Inside:
+      default:
+        // indent text a bit from the bar's left so it doesn't collide with rounded corners
+        return Gantt.TimeScale(task.start) + this.PADDING_TEXT_INSIDE_BAR;
     }
-
-    return 0; // fallback
   }
 
   /**
@@ -4956,11 +4915,10 @@ export class Gantt implements IVisual {
     let scrollValue = Gantt.TimeScale(new Date(timestamp));
     scrollValue -= scrollValue > ScrollMargin ? ScrollMargin : 0;
 
-    if (axisLength > scrollValue) {
-      (this.body.node() as SVGSVGElement).querySelector(
-        Gantt.Body.selectorName
-      ).scrollLeft = scrollValue;
-    }
+    const scroller = (this.body.node() as HTMLElement).querySelector(
+      Gantt.Body.selectorName
+    ) as HTMLElement;
+    if (scroller) scroller.scrollLeft = scrollValue;
   }
 
   private renderTooltip(
@@ -5017,34 +4975,70 @@ export class Gantt implements IVisual {
   public static downgradeDurationUnitIfNeeded(
     tasks: Task[],
     durationUnit: DurationUnit
-  ) {
-    const downgradedDurationUnitTasks = tasks.filter(
-      (t) => t.wasDowngradeDurationUnit
-    );
+  ): void {
+    if (!Array.isArray(tasks) || !tasks.length) return;
 
-    if (downgradedDurationUnitTasks.length) {
-      let maxStepDurationTransformation: number = 0;
-      downgradedDurationUnitTasks.forEach(
-        (x) =>
-          (maxStepDurationTransformation =
-            x.stepDurationTransformation > maxStepDurationTransformation
-              ? x.stepDurationTransformation
-              : maxStepDurationTransformation)
-      );
+    // Find the *lowest* unit we actually used on any task
+    // (some tasks may have had to be downgraded to display fractional durations cleanly)
+    let lowestUnit: DurationUnit = durationUnit;
+    let maxStepDown = 0;
 
-      tasks
-        .filter(
-          (x) => x.stepDurationTransformation !== maxStepDurationTransformation
-        )
-        .forEach((task) => {
-          task.duration = DurationHelper.transformDuration(
-            task.duration,
-            durationUnit,
-            maxStepDurationTransformation
-          );
-          task.stepDurationTransformation = maxStepDurationTransformation;
-          task.wasDowngradeDurationUnit = true;
-        });
+    for (const t of tasks) {
+      if (!t) continue;
+      // stepDurationTransformation is how many steps we moved *down* from the visual’s unit
+      // (Day→Hour→Minute→Second).
+      const step = Math.max(0, t.stepDurationTransformation || 0);
+      maxStepDown = Math.max(maxStepDown, step);
+    }
+
+    if (maxStepDown <= 0) return; // nothing to do
+
+    // Walk the enum “down” maxStepDown steps
+    const order: DurationUnit[] = [
+      DurationUnit.Second,
+      DurationUnit.Minute,
+      DurationUnit.Hour,
+      DurationUnit.Day,
+    ];
+    const idx = order.indexOf(durationUnit);
+    const newIdx = Math.max(0, idx - maxStepDown);
+    lowestUnit = order[newIdx];
+
+    if (lowestUnit === durationUnit) return;
+
+    // Convert *all* task durations to the final lowest unit so everything is consistent.
+    const toMs = (v: number, u: DurationUnit) => {
+      switch (u) {
+        case DurationUnit.Second:
+          return v * 1000;
+        case DurationUnit.Minute:
+          return v * 60 * 1000;
+        case DurationUnit.Hour:
+          return v * 60 * 60 * 1000;
+        default:
+          return v * 24 * 60 * 60 * 1000; // Day
+      }
+    };
+    const fromMs = (ms: number, u: DurationUnit) => {
+      switch (u) {
+        case DurationUnit.Second:
+          return ms / 1000;
+        case DurationUnit.Minute:
+          return ms / (60 * 1000);
+        case DurationUnit.Hour:
+          return ms / (60 * 60 * 1000);
+        default:
+          return ms / (24 * 60 * 60 * 1000);
+      }
+    };
+
+    for (const t of tasks) {
+      if (t?.duration == null || t.start == null || t.end == null) continue;
+      // Recompute duration from start/end to avoid compounding rounding.
+      const ms = Math.max(0, t.end.getTime() - t.start.getTime());
+      t.duration = fromMs(ms, lowestUnit);
+      t.wasDowngradeDurationUnit = false;
+      t.stepDurationTransformation = 0;
     }
   }
 
