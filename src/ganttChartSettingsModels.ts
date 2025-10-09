@@ -360,7 +360,7 @@ export class MilestonesCardSettings extends Card {
     displayNameKey: "Visual_Shape",
     items: shapesOptions,
     value: shapesOptions[0],
-    visible: true, // visibility can be overridden in filterSettingsCards
+    visible: true,
   });
 
   showLabels = new formattingSettings.ToggleSwitch({
@@ -380,7 +380,7 @@ export class MilestonesCardSettings extends Card {
     displayNameKey: "Visual_Milestone_Shape",
     items: shapesOptions,
     value: shapesOptions[0],
-    visible: false, // visibility can be overridden in filterSettingsCards
+    visible: false,
   });
 
   useIcons = new formattingSettings.ToggleSwitch({
@@ -428,7 +428,6 @@ export class MilestonesCardSettings extends Card {
   name: string = "milestones";
   displayNameKey: string = "Visual_Milestones";
 
-  // IMPORTANT: include the new toggle here so the formatting service binds it
   slices = [
     this.fill,
     this.shapeType,
@@ -524,7 +523,7 @@ export class TooltipConfigCardSettings extends Card {
   mode = new formattingSettings.ItemDropdown({
     name: "mode",
     displayNameKey: "Tooltip_Mode",
-    // keeping literal labels here is fine; or swap to keys and localize later
+
     items: [
       { value: "all", displayName: "All" },
       { value: "dates-only", displayName: "Dates only" },
@@ -545,7 +544,6 @@ export class TooltipConfigCardSettings extends Card {
     value: true,
   });
 
-  // FIXED: use keys that exist in your resjson
   showStart = new formattingSettings.ToggleSwitch({
     name: "showStart",
     displayNameKey: "Tooltip_Show_Start",
@@ -776,7 +774,6 @@ export class GanttChartSettingsModel extends Model {
   populateMilestones(milestonesWithoutDuplicates: {
     [name: string]: MilestoneDataPoint;
   }) {
-    // Make sure the toggle is always present in the card
     const newSlices: FormattingSettingsSlice[] = [
       this.milestonesCardSettings.showLabels,
     ];
@@ -826,7 +823,6 @@ export class GanttChartSettingsModel extends Model {
       this.legendCardSettings.showTitle,
       this.legendCardSettings.titleText,
 
-      // keep this so typing doesn't "remove" it after the next update
       this.legendCardSettings.legendSortOrder,
 
       this.legendCardSettings.labelColor,

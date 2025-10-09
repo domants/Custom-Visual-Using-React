@@ -27,7 +27,6 @@
 import "./../style/gantt.less";
 
 import { select as d3Select, Selection as d3Selection } from "d3-selection";
-//import { ScaleTime as timeScale } from "d3-scale";
 
 import type { ScaleTime } from "d3-scale";
 import {
@@ -80,10 +79,8 @@ import {
   TooltipEnabledDataPoint,
 } from "powerbi-visuals-utils-tooltiputils";
 
-// powerbi.extensibility.utils.color
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 
-// powerbi.extensibility.utils.chart.legend
 import {
   axis as AxisHelper,
   axisInterfaces,
@@ -148,10 +145,8 @@ import {
   ResourceLabelPosition,
 } from "./enums";
 
-// d3
 type Selection<T1, T2 = T1> = d3Selection<any, T1, any, T2>;
 
-// powerbi
 import DataView = powerbi.DataView;
 import IViewport = powerbi.IViewport;
 import SortDirection = powerbi.SortDirection;
@@ -171,35 +166,35 @@ import IColorPalette = powerbi.extensibility.IColorPalette;
 import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import IVisualEventService = powerbi.extensibility.IVisualEventService;
 import VisualTooltipDataItem = powerbi.extensibility.VisualTooltipDataItem;
-// powerbi.visuals
+
 import ISelectionIdBuilder = powerbi.visuals.ISelectionIdBuilder;
-// powerbi.extensibility.visual
+
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
-// powerbi.extensibility.utils.svg
+
 import SVGManipulations = SVGUtil.manipulation;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 import IMargin = SVGUtil.IMargin;
-// powerbi.extensibility.utils.type
+
 import PrimitiveType = valueType.PrimitiveType;
 import ValueType = valueType.ValueType;
-// powerbi.extensibility.utils.formatting
+
 import IValueFormatter = ValueFormatter.IValueFormatter;
-// powerbi.extensibility.utils.interactivity
+
 import appendClearCatcher = interactivityService.appendClearCatcher;
 import IInteractiveBehavior = interactivityService.IInteractiveBehavior;
 import IInteractivityService = interactivityService.IInteractivityService;
 import createInteractivityService = interactivitySelectionService.createInteractivitySelectionService;
-// powerbi.extensibility.utils.chart.legend
+
 import ILegend = legendInterfaces.ILegend;
 import LegendPosition = legendInterfaces.LegendPosition;
 import LegendData = legendInterfaces.LegendData;
 import createLegend = LegendModule.createLegend;
 import LegendDataPoint = legendInterfaces.LegendDataPoint;
-// powerbi.extensibility.utils.chart
+
 import IAxisProperties = axisInterfaces.IAxisProperties;
 
 const PercentFormat: string = "0.00 %;-0.00 %;0.00 %";
@@ -387,7 +382,6 @@ export class Gantt implements IVisual {
   private static TaskOpacity: number = 1;
   public static RectRound: number = 7;
 
-  //private static TimeScale: timeScale<any, any>;
   private static TimeScale: ScaleTime<number, number>;
 
   private xAxisProperties: IAxisProperties;
@@ -405,7 +399,7 @@ export class Gantt implements IVisual {
   private formattingSettingsService: FormattingSettingsService;
 
   private hasHighlights: boolean;
-  private hasTooltipFields: boolean = false; // flag for displaying default tooltips
+  private hasTooltipFields: boolean = false;
   private margin: IMargin = Gantt.DefaultMargin;
 
   private body: Selection<any>;
@@ -484,10 +478,8 @@ export class Gantt implements IVisual {
       .append("g")
       .classed(Gantt.Chart.className, true);
 
-    // Row background layer — create ONCE and BEFORE tasks to stay underneath
     this.rowBgGroup = this.chartGroup.append("g").classed("row-bg-group", true);
 
-    // Tasks layer on top of row backgrounds
     this.taskGroup = this.chartGroup
       .append("g")
       .classed(Gantt.Tasks.className, true);
@@ -556,7 +548,6 @@ export class Gantt implements IVisual {
       (event: any) => {
         if (!this.viewModel) return;
 
-        // Use the labels card you actually have in your settings model
         const taskLabelsWidth: number = this.viewModel.settings.categorySettings
           .show.value
           ? this.viewModel.settings.categorySettings.width.value
@@ -565,7 +556,6 @@ export class Gantt implements IVisual {
         const scrollTop: number = event.target.scrollTop as number;
         const scrollLeft: number = event.target.scrollLeft as number;
 
-        // Keep axis fixed horizontally but follow vertical scroll
         this.axisGroup.attr(
           "transform",
           SVGManipulations.translate(
@@ -574,7 +564,6 @@ export class Gantt implements IVisual {
           )
         );
 
-        // Left labels/grid group scrolls horizontally
         this.lineGroup
           .attr("transform", SVGManipulations.translate(scrollLeft, 0))
           .attr("height", 20);
@@ -665,8 +654,7 @@ export class Gantt implements IVisual {
     const isNonMilestone = !task?.Milestones || task.Milestones.length === 0;
 
     if (enableFullDay && isNonMilestone && task?.end instanceof Date) {
-      // Normalize to [00:00, next 00:00) of the task's end date
-      return Gantt.daySpan(task.end).end; // i.e., +1 day at 00:00
+      return Gantt.daySpan(task.end).end;
     }
     return task?.end;
   }
@@ -679,7 +667,6 @@ export class Gantt implements IVisual {
     isEndDateFilled: boolean,
     roleLegendText?: string,
     tt = {
-      // NEW defaulted bag
       showLegend: true,
       showTaskName: true,
       showStart: true,
@@ -814,7 +801,6 @@ export class Gantt implements IVisual {
       }
     }
 
-    // Priority of using date format: Format from dvColumn -> Format by culture selector -> Custom Format
     if (cultureSelector) {
       dateFormat = null;
     }
@@ -1049,7 +1035,6 @@ export class Gantt implements IVisual {
 
     const selectionBuilder = selectionBuilderFactory();
 
-    // figure out color, duration, endDate, type, etc.
     const groupAttrs = this.computeTaskGroupAttributes(
       taskColor,
       groupValues,
@@ -1172,15 +1157,12 @@ export class Gantt implements IVisual {
       durationUnit = res.durationUnit;
     });
 
-    // normalize units if needed
     this.downgradeDurationUnitIfNeeded(tasks, durationUnit);
 
-    // sort (when parent bound)
     if (values.Parent) {
       tasks = this.sortTasksWithParents(tasks, sortingOptions);
     }
 
-    // finalize details (end dates, days off, visibility)
     this.updateTaskDetails(
       tasks,
       durationUnit,
@@ -1190,7 +1172,6 @@ export class Gantt implements IVisual {
       collapsedTasks
     );
 
-    // fill tooltips (for collapsed groups too)
     this.addTooltipInfoForTasks(
       tasks,
       formatters,
@@ -1356,7 +1337,6 @@ export class Gantt implements IVisual {
           });
         }
         if (!tt.showMilestoneDate.value) {
-          // remove any date-only rows if date is hidden
           rows = rows.filter((r) => r.value !== dateFormatted);
         }
 
@@ -1487,7 +1467,6 @@ export class Gantt implements IVisual {
 
     if (groupValues) {
       groupValues.forEach((group: GanttColumns<DataViewValueColumn>) => {
-        // Duration-based grouping
         if (group.Duration && group.Duration.values[index] !== null) {
           const res = this.applyDurationGroupAttributes(
             group,
@@ -1512,7 +1491,6 @@ export class Gantt implements IVisual {
           return;
         }
 
-        // EndDate-based grouping
         if (group.EndDate && group.EndDate.values[index] !== null) {
           const res = this.applyEndDateGroupAttributes(
             group,
@@ -1874,9 +1852,6 @@ export class Gantt implements IVisual {
         ]);
       }
 
-      // Example: some task starts on Saturday 8:30 and ends on Thursday 8:30,
-      // so it has extra duration and now will end on next Saturday 8:30
-      // --- we need to add days off -- it ends on Monday 8.30
       if (
         !alreadyInDaysOffList &&
         (isFirstDayOff || isSecondDayOff) &&
@@ -1935,7 +1910,7 @@ export class Gantt implements IVisual {
     return (
       firstDate.getFullYear() === secondDate.getFullYear() &&
       firstDate.getMonth() === secondDate.getMonth() &&
-      firstDate.getDate() === secondDate.getDate() // <- day of month (1–31)
+      firstDate.getDate() === secondDate.getDate() // day of month (1–31)
     );
   }
 
@@ -2000,7 +1975,7 @@ export class Gantt implements IVisual {
     for (let i = 0; i < daysOffList.length; i++) {
       const itemAmount = daysOffList[i][1];
       extraDuration += itemAmount;
-      // not to count for neighbour dates
+
       if (itemAmount === 2 && i + 1 < daysOffList.length) {
         const itemDate = daysOffList[i][0].getDate();
         const nextDate = daysOffList[i + 1][0].getDate();
@@ -2016,7 +1991,6 @@ export class Gantt implements IVisual {
       const prevDate = new Date(prevDayTimestamp);
       prevDate.setHours(0, 0, 0);
 
-      // in milliseconds
       let alreadyAccountedDuration = startDate.getTime() - prevDate.getTime();
       alreadyAccountedDuration = Gantt.convertMillisecondsToDuration(
         alreadyAccountedDuration,
@@ -2158,15 +2132,11 @@ export class Gantt implements IVisual {
 
     const settings: GanttChartSettingsModel = this.formattingSettings;
 
-    // host objects (may be partial!)
     const objs = (dataView?.metadata?.objects ?? {}) as any;
     const m = objs["milestones"] as any;
 
-    // ensure cache object
     this._lastMilestones ??= {};
 
-    // helper: adopt a boolean from host payload if present,
-    // otherwise keep the last known value, otherwise keep current default.
     const stickBool = (
       host: any,
       key: keyof NonNullable<Gantt["_lastMilestones"]>,
@@ -2180,19 +2150,17 @@ export class Gantt implements IVisual {
       }
     };
 
-    // --- Milestones card: make booleans "sticky"
     const ms = settings.milestonesCardSettings;
 
     stickBool(m, "useIcons", ms.useIcons);
     stickBool(m, "roundedBars", ms.roundedBars);
     stickBool(m, "useLegendColorForBars", ms.useLegendColorForBars);
     stickBool(m, "showResourceOnBars", ms.showResourceOnBars);
-    // resourceInitialOnly exists only in your build, so guard it:
+
     if ((ms as any).resourceInitialOnly) {
       stickBool(m, "resourceInitialOnly", (ms as any).resourceInitialOnly);
     }
 
-    // non-boolean milestone fields:
     const applyAllFromHost: boolean = !!m?.applyToAll;
     ms.applyToAll.value = applyAllFromHost;
 
@@ -2217,7 +2185,6 @@ export class Gantt implements IVisual {
 
   private static _uid = 0;
 
-  // ✅ No Math.random fallback; uses counter+timestamp if crypto is missing
   private static newUpdateId(): string {
     if (typeof crypto !== "undefined" && crypto.getRandomValues) {
       const bytes = new Uint8Array(8);
@@ -2227,7 +2194,7 @@ export class Gantt implements IVisual {
         .join("");
       return `${Date.now()}_${rand}`;
     }
-    // deterministic & ESLint-safe
+
     return `${Date.now()}_${Gantt._uid++}`;
   }
 
@@ -2369,10 +2336,6 @@ export class Gantt implements IVisual {
     }
 
     this.updateInternal(options);
-
-    // const rb =
-    //   options?.dataViews?.[0]?.metadata?.objects?.milestones?.roundedBars;
-    // console.log(`roundedBars toggled to -> ${rb}`);
   }
 
   private safeX(d: Date | number): number {
@@ -2390,7 +2353,6 @@ export class Gantt implements IVisual {
       this.localizationManager
     );
 
-    // for duplicated milestone types
     if (this.viewModel && this.viewModel.milestonesData) {
       const newMilestoneData: MilestoneData = this.viewModel.milestonesData;
       const milestonesWithoutDuplicates = Gantt.getUniqueMilestones(
@@ -2460,7 +2422,7 @@ export class Gantt implements IVisual {
       groupTasks,
       this.collapsedTasks
     );
-    // do something with task ids
+
     this.updateCommonTasks(groupedTasks);
     this.updateCommonMilestones(groupedTasks);
 
@@ -2480,9 +2442,6 @@ export class Gantt implements IVisual {
       const startDate: Date = minDateTask.start;
       let endDate: Date = maxDateTask.end;
 
-      // if (startDate.toString() === endDate.toString()) {
-      //   endDate = new Date(endDate.valueOf() + 24 * 60 * 60 * 1000);
-      // }
       if (startDate.getTime() === endDate.getTime()) {
         endDate = new Date(endDate.getTime() + 24 * 60 * 60 * 1000);
       }
@@ -2641,7 +2600,6 @@ export class Gantt implements IVisual {
       textProperties
     );
 
-    // If labels do not fit, and we are not scrolling, try word breaking
     axes.willLabelsWordBreak =
       !axes.willLabelsFit &&
       !scrollbarVisible &&
@@ -3160,13 +3118,6 @@ export class Gantt implements IVisual {
       }
     });
 
-    // eslint-disable-next-line
-    // const newId = `${Date.now()}_${Array.from(
-    //   crypto.getRandomValues(new Uint8Array(8))
-    // )
-    //   .map((b) => b.toString(36))
-    //   .join("")}`;
-
     const newId = Gantt.newUpdateId();
     this.collapsedTasksUpdateIDs.push(newId);
     this.setJsonFiltersValues(this.collapsedTasks, newId);
@@ -3193,7 +3144,6 @@ export class Gantt implements IVisual {
       collapsedAllSelector.attr(this.collapseAllFlag, "0");
       drawCollapseButton(collapsedAllSelector, buttonColor);
     } else {
-      // collapse all (unique parents only)
       const set = new Set<string>(this.collapsedTasks);
       this.viewModel.tasks.forEach((t: Task) => {
         if (t.parent && t.visibility) set.add(t.parent);
@@ -3226,8 +3176,6 @@ export class Gantt implements IVisual {
           objectName: "collapsedTasksUpdateId",
           selector: null,
           properties: {
-            //edit value: JSON.stringify(collapsedTasksUpdateId),
-            //early-return won't trigger update to no JSON.stringify
             value: collapsedTasksUpdateId,
           },
         },
@@ -3293,7 +3241,7 @@ export class Gantt implements IVisual {
             return { row: task.index, start, end, resource: task.resource };
           });
         },
-        // stable key: row + ISO day
+
         (d: any) =>
           `${d?.row ?? "r"}-${
             d?.start instanceof Date
@@ -3348,12 +3296,10 @@ export class Gantt implements IVisual {
         Gantt.getBarHeight(taskConfigHeight) / 2;
       const rowOffset = (row + 1) * this.getResourceLabelTopMargin();
 
-      // Center vertically when label is Inside the bar
       if (cfg.pos === ResourceLabelPosition.Inside) {
         return barMid + rowOffset;
       }
 
-      // Otherwise keep existing offsets
       return (
         Gantt.getBarYCoordinate(row, taskConfigHeight) +
         Gantt.getResourceLabelYOffset(taskConfigHeight, cfg.fontPt, cfg.pos) +
@@ -3383,12 +3329,8 @@ export class Gantt implements IVisual {
       })
       .attr("y", (d: any) => yForMilestone(d.row))
       .attr("text-anchor", "start")
-      //.style("fill", cfg.fillColor)
+
       .style("fill", (_d: any, _i: number, nodes: any[]) => {
-        // each node is bound to { row, start, end, resource }
-        // get the Task for that row to reuse the same logic
-        // (We can grab it via the parent selection’s data if needed; easiest is to
-        // compute from the resource text directly using the same rules.)
         const tempTaskLike = {
           resource: nodes[_i]?.__data__?.resource ?? "",
           extraInformation: [],
@@ -3418,7 +3360,7 @@ export class Gantt implements IVisual {
       defaultClipWidth: number;
     }
   ) {
-    if (cfg.initialsOnly) return; // 1 char -> no clip
+    if (cfg.initialsOnly) return;
 
     if (cfg.pos === ResourceLabelPosition.Inside) {
       merged.each((d: any, i, nodes) => {
@@ -3450,7 +3392,6 @@ export class Gantt implements IVisual {
   ): void {
     const cfg = this.getMsResConfig(taskConfigHeight);
 
-    // (optional) task lookup by row so we can color by legend/task type:
     const rowToTask = new Map<number, Task>();
     this.taskGroup
       .selectAll(Gantt.SingleTask.selectorName)
@@ -3497,7 +3438,6 @@ export class Gantt implements IVisual {
    * label pane (left) + time grid (right).
    */
   private renderParentRowBackgrounds(groupedTasks: GroupedTask[]): void {
-    // Clear previous
     this.rowBgGroup.selectAll("rect.row-bg-rect").remove();
 
     const color =
@@ -3505,13 +3445,10 @@ export class Gantt implements IVisual {
         ?.value;
     if (!this.hasNotNullableDates || !color) return;
 
-    // --- Widths ---
-    // Time grid width (from the time scale)
     const rng = (Gantt.TimeScale as any)?.range?.();
     const timeW =
       Array.isArray(rng) && rng.length >= 2 ? Math.max(0, rng[1] - rng[0]) : 0;
 
-    // Label pane + gutters used in your transforms
     const labelPaneW =
       (this.viewModel.settings.categorySettings.show.value
         ? this.viewModel.settings.categorySettings.width.value
@@ -3519,16 +3456,13 @@ export class Gantt implements IVisual {
       this.margin.left +
       Gantt.SubtasksLeftMargin;
 
-    // Total row span we want to cover (starts before chartGroup origin)
     const totalW = labelPaneW + timeW;
 
-    // --- Vertical sizing (same band as your gridlines) ---
     const rowH =
       this.viewModel.settings.taskConfigCardSettings.height.value ||
       DefaultChartLineHeight;
     const barH = Gantt.getBarHeight(rowH);
 
-    // Parent rows only (a parent has children on its first task)
     const parents = groupedTasks.filter(
       (gt) => !!gt?.tasks?.[0]?.children?.length
     );
@@ -3542,9 +3476,9 @@ export class Gantt implements IVisual {
       .append("rect")
       .classed("row-bg-rect", true)
       .merge(sel as any)
-      // Shift left so the fill includes the label pane
+
       .attr("x", -labelPaneW)
-      // Use the bar's Y then expand to full row band
+
       .attr("y", (gt: GroupedTask) => {
         const barY =
           Gantt.getBarYCoordinate(gt.index, rowH) +
@@ -3590,29 +3524,24 @@ export class Gantt implements IVisual {
       generalBarsRoundedCorners
     );
 
-    // ── CHANGED: respect useIcons & showLabels, and clear leftovers from other mode
     const useIcons =
       !!this.viewModel.settings.milestonesCardSettings.useIcons.value;
     const showMsLabels =
       !!this.viewModel.settings.milestonesCardSettings.showLabels.value;
 
     if (useIcons) {
-      // clear bar-mode artifacts
       taskSelection.selectAll("path.milestone-as-bar").remove();
       taskSelection.selectAll("text.milestone-resource").remove();
 
-      // draw icons
       this.MilestonesRender(taskSelection, taskConfigHeight);
 
-      // labels next to icon → only when toggled ON
+      // labels next to icon - only when toggled ON
       if (showMsLabels) {
-        // labels are rendered per milestone group (the <g> created in MilestonesRender)
         const msGroups = taskSelection.selectAll(
           Gantt.TaskMilestone.selectorName
         );
         this.renderMilestoneLabels(msGroups, taskConfigHeight);
       } else {
-        // ensure no event names appear when OFF
         taskSelection.selectAll("text.milestone-legend").remove();
       }
     } else {
@@ -3732,7 +3661,6 @@ export class Gantt implements IVisual {
 
     if (!this.hasNotNullableDates) return 0;
 
-    // Non-milestone bars (or collapsed parents) get drawn; use visual end if toggle is on
     if (taskIsCollapsed || lodashIsEmpty(task.Milestones)) {
       const visualEnd = this.getVisualEndForTask(task) || task.end;
       return Gantt.taskDurationToWidth(task.start, visualEnd);
@@ -3796,7 +3724,6 @@ export class Gantt implements IVisual {
       )
       .attr("width", (task: Task) => this.getTaskRectWidth(task))
       .style("fill", (task: Task) => {
-        // logic used for grouped tasks, when there are several bars related to one category
         if (index === task.index) {
           groupedTaskIndex++;
         } else {
@@ -3825,7 +3752,7 @@ export class Gantt implements IVisual {
     taskRect.exit().remove();
   }
 
-  // DRAW helper for milestone 1-day bar; respects rounded toggle
+  // helper for milestone 1-day bar
   private getMilestoneBarPath(
     m: MilestonePath,
     taskConfigHeight: number,
@@ -3842,7 +3769,6 @@ export class Gantt implements IVisual {
 
     const h = Gantt.getBarHeight(taskConfigHeight);
 
-    // safe radius (cannot exceed half of width/height)
     const r = Math.min(Gantt.RectRound, h / 2, w / 2);
 
     if (rounded && w >= 2 * r) {
@@ -3851,7 +3777,6 @@ export class Gantt implements IVisual {
     return drawNotRoundedRectByPath(x, y, w, h);
   }
 
-  // Draw 1-day bars for milestones, with tooltips, square corners
   private MilestonesAsBarsRender(
     taskSelection: Selection<Task>,
     taskConfigHeight: number
@@ -3867,7 +3792,7 @@ export class Gantt implements IVisual {
               start: m.start,
               taskID: task.index,
               tooltipInfo: m.tooltipInfo,
-              color: this.getMilestoneColor(m.type), // fallback
+              color: this.getMilestoneColor(m.type),
               label: task.taskType || "", // legend label
             } as MilestonePath)
         );
@@ -3929,11 +3854,9 @@ export class Gantt implements IVisual {
     const m = objs["milestones"] as any;
     if (!m) return null;
 
-    // Only apply when the toggle is on
     const applyAll = m.applyToAll === true;
     if (!applyAll) return null;
 
-    // Respect the current settings model value (can be "Flag" or { value: "Flag" })
     const s = this.viewModel?.settings?.milestonesCardSettings;
     const raw = s?.globalShape?.value as any;
     const v = (typeof raw === "string" ? raw : raw?.value) as
@@ -3949,7 +3872,6 @@ export class Gantt implements IVisual {
   ): string {
     const h = Gantt.getBarHeight(taskConfigHeight);
 
-    // 1) Global override, if Apply to All is ON
     const globalShape = this.getGlobalMilestoneShape();
     const perTypeShape = this.viewModel.milestonesData?.dataPoints?.find(
       (dp) => dp.name === milestoneType
@@ -3968,7 +3890,6 @@ export class Gantt implements IVisual {
     }
   }
 
-  // Returns the legend color for a given series label (task type), with a safe fallback
   private getLegendPointColor(label: string): string {
     const points = this.viewModel?.legendData?.dataPoints ?? [];
     const dp = points.find((p) => p.label === label);
@@ -4124,7 +4045,6 @@ export class Gantt implements IVisual {
 
     this.renderTooltip(selMerged);
 
-    // After selMerged (icons)
     const resText = merged
       .selectAll("text.milestone-resource-icon")
       .data((m) => m.values);
@@ -4244,7 +4164,7 @@ export class Gantt implements IVisual {
       .selectAll(Gantt.TaskProgress.selectorName)
       .data((d: Task) => {
         const taskProgressPercentage = this.getDaysOffTaskProgressPercent(d);
-        // logic used for grouped tasks, when there are several bars related to one category
+
         if (index === d.index) {
           groupedTaskIndex++;
         } else {
@@ -4286,7 +4206,6 @@ export class Gantt implements IVisual {
       (gradient) => <LinearStop[]>gradient.values
     );
 
-    // draw 4 stops: 1st and 2d stops are for completed rect part; 3d and 4th ones -  for main rect
     stopsSelectionData
       .enter()
       .append("stop")
@@ -4445,7 +4364,7 @@ export class Gantt implements IVisual {
     const mapped = Gantt.ResourceFontColorByLegend[key];
 
     const chosen = mapped || fallbackHex;
-    // Note: in High Contrast, this may still return the HC foreground color by design.
+
     return this.colorHelper.getHighContrastColor("foreground", chosen);
   }
 
@@ -4512,13 +4431,13 @@ export class Gantt implements IVisual {
       .text(
         (task: Task) => (lodashIsEmpty(task.Milestones) && task.resource) || ""
       )
-      //.style("fill", taskResourceColor)
+
       .style("fill", (task: Task) =>
         this.getResourceFontColor(task, taskResourceColor)
       )
 
       .style("font-size", PixelConverter.fromPoint(taskResourceFontSize))
-      // vertical centering only when Inside
+
       .style(
         "alignment-baseline",
         taskResourcePosition === ResourceLabelPosition.Inside
@@ -4581,11 +4500,9 @@ export class Gantt implements IVisual {
         );
 
       case ResourceLabelPosition.Inside:
-        // ✅ exact vertical center of the bar
         return barHeight / 2;
     }
 
-    // (Optional) fallback to avoid undefined
     return 0;
   }
 
@@ -4606,7 +4523,7 @@ export class Gantt implements IVisual {
         return Gantt.TimeScale(task.start) + Gantt.RectRound;
       case ResourceLabelPosition.Inside:
       default:
-        // indent text a bit from the bar's left so it doesn't collide with rounded corners
+        // move text a bit from the bar's left
         return Gantt.TimeScale(task.start) + this.PADDING_TEXT_INSIDE_BAR;
     }
   }
@@ -4664,7 +4581,7 @@ export class Gantt implements IVisual {
             date[0].getTime() <= currentProgressTime
         );
 
-        const currentProgressDate = new Date(currentProgressTime); // extra duration between task.start and the current progress time.
+        const currentProgressDate = new Date(currentProgressTime);
         const extraDuration: number = Gantt.calculateExtraDurationDaysOff(
           daysOffFiltered,
           task.start,
@@ -4744,7 +4661,6 @@ export class Gantt implements IVisual {
   }
 
   private static daySpan(date: Date): { start: Date; end: Date } {
-    // normalize to 00:00:00 local
     const start = new Date(
       date.getFullYear(),
       date.getMonth(),
@@ -4754,7 +4670,7 @@ export class Gantt implements IVisual {
       0,
       0
     );
-    const end = Gantt.getEndDate(DurationUnit.Day, start, 1); // next day, no gaps
+    const end = Gantt.getEndDate(DurationUnit.Day, start, 1);
     return { start, end };
   }
 
@@ -4826,13 +4742,11 @@ export class Gantt implements IVisual {
       Gantt.ChartLine.selectorName
     );
 
-    // If nothing to show or no dates, clear and exit
     if (!this.hasNotNullableDates || (!showMilestoneLines && !showTodayLine)) {
       lineSel.remove();
       return;
     }
 
-    // Colors
     const msLineColorRaw =
       this.viewModel?.settings?.milestonesCardSettings?.milestoneLineColor
         ?.value?.value;
@@ -4849,7 +4763,6 @@ export class Gantt implements IVisual {
       todayColorRaw
     );
 
-    // Collect unique milestone dates (ghost lines)
     const milestoneDates: Date[] = [];
     if (showMilestoneLines) {
       const pushUnique = (d: Date) => {
@@ -4869,7 +4782,6 @@ export class Gantt implements IVisual {
       });
     }
 
-    // Build line models (carry an isToday flag so we can style per-line)
     const dateTypeSettings: DateTypeCardSettings =
       this.viewModel.settings.dateTypeCardSettings;
 
@@ -4914,7 +4826,6 @@ export class Gantt implements IVisual {
       });
     }
 
-    // Render (per-line stroke so Today can differ)
     const chartLineSelection = this.chartGroup
       .selectAll<SVGLineElement, LineEx>(Gantt.ChartLine.selectorName)
       .data(lines, (d: any) => d.__key);
@@ -4952,7 +4863,6 @@ export class Gantt implements IVisual {
   private renderTooltip(
     selection: Selection<Line | Task | MilestonePath>
   ): void {
-    //if (!this.hasTooltipFields) return; -> show default tooltips
     this.tooltipServiceWrapper.addTooltip(
       selection,
       (tooltipEvent: TooltipEnabledDataPoint) => tooltipEvent.tooltipInfo
@@ -4999,12 +4909,10 @@ export class Gantt implements IVisual {
     const barH = Gantt.getBarHeight(rowH);
     const last = Math.max(0, numRows - 1);
 
-    // Y position where the last bar starts (within chartGroup coords)
     const yTop =
       Gantt.getBarYCoordinate(last, rowH) +
       (last + 1) * this.getResourceLabelTopMargin();
 
-    // Line should reach the bottom of the last bar
     return yTop + barH;
   }
 
@@ -5024,7 +4932,7 @@ export class Gantt implements IVisual {
       maxStepDown = Math.max(maxStepDown, step);
     }
 
-    if (maxStepDown <= 0) return; // nothing to do
+    if (maxStepDown <= 0) return;
 
     const order: DurationUnit[] = [
       DurationUnit.Second,
@@ -5053,7 +4961,7 @@ export class Gantt implements IVisual {
 
     for (const t of tasks) {
       if (t?.duration == null || t.start == null || t.end == null) continue;
-      // Recompute duration from start/end to avoid compounding rounding.
+
       const ms = Math.max(0, t.end.getTime() - t.start.getTime());
       t.duration = fromMs(ms, lowestUnit);
       t.wasDowngradeDurationUnit = false;
@@ -5103,9 +5011,6 @@ export class Gantt implements IVisual {
 
     settings.cards.forEach((element) => {
       switch (element.name) {
-        // ───────────────────────────────────────────
-        // Milestones card
-        // ───────────────────────────────────────────
         case Gantt.MilestonesPropertyIdentifier.objectName: {
           const card = settings.milestonesCardSettings;
           const useIcons = !!card.useIcons.value;
@@ -5120,7 +5025,6 @@ export class Gantt implements IVisual {
           card.globalShape.visible = false;
 
           if (!useIcons) {
-            // BAR MODE (Use Milestone Icon = OFF)
             card.showLabels.visible = false;
             card.applyToAll.visible = false;
             card.globalShape.visible = false;
@@ -5137,12 +5041,11 @@ export class Gantt implements IVisual {
               card.showResourceOnBars,
               ...(maybeInitialOnly ? [maybeInitialOnly] : []),
               card.milestoneLine,
-              card.milestoneLineColor, // <- color picker appears with toggle
+              card.milestoneLineColor,
             ];
             break;
           }
 
-          // ICON MODE (Use Milestone Icon = ON)
           card.showLabels.visible = true;
 
           const mPoints = this.viewModel?.milestonesData?.dataPoints;
@@ -5152,7 +5055,7 @@ export class Gantt implements IVisual {
               card.showLabels,
               card.applyToAll,
               card.milestoneLine,
-              card.milestoneLineColor, // <- include here too
+              card.milestoneLineColor,
             ];
             break;
           }
