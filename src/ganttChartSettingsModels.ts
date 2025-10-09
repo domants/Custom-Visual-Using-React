@@ -328,6 +328,13 @@ export class LegendCardSettings extends Card {
     },
   });
 
+  legendSortOrder = new formattingSettings.TextInput({
+    name: "legendSortOrder",
+    displayNameKey: "Legend_Sort_Order",
+    placeholder: "A,B,C (comma/semicolon separator)",
+    value: "",
+  });
+
   name: string = "legend";
   displayNameKey: string = "Visual_Legend";
 
@@ -335,6 +342,7 @@ export class LegendCardSettings extends Card {
     this.position,
     this.showTitle,
     this.titleText,
+    this.legendSortOrder,
     this.labelColor,
     this.fontSize,
   ];
@@ -809,35 +817,74 @@ export class GanttChartSettingsModel extends Model {
     this.milestonesCardSettings.slices = newSlices;
   }
 
+  // public populateLegend(
+  //   dataPoints: LegendDataPoint[],
+  //   localizationManager: ILocalizationManager
+  // ) {
+  //   const newSlices: FormattingSettingsSlice[] = [
+  //     this.legendCardSettings.position,
+  //     this.legendCardSettings.showTitle,
+  //     this.legendCardSettings.titleText,
+  //     this.legendCardSettings.legendSortOrder,
+  //     this.legendCardSettings.labelColor,
+  //     this.legendCardSettings.fontSize,
+  //   ];
+
+  //   if (!dataPoints || dataPoints.length === 0) {
+  //     this.legendCardSettings.slices = newSlices;
+  //     return;
+  //   }
+
+  //   for (const dataPoint of dataPoints) {
+  //     newSlices.push(
+  //       new formattingSettings.ColorPicker({
+  //         name: "fill",
+  //         displayName:
+  //           dataPoint.label ||
+  //           localizationManager.getDisplayName("Visual_LegendColor"),
+  //         selector: ColorHelper.normalizeSelector(
+  //           (<ISelectionId>dataPoint.identity).getSelector(),
+  //           false
+  //         ),
+  //         value: { value: dataPoint.color },
+  //       })
+  //     );
+  //   }
+
+  //   this.legendCardSettings.slices = newSlices;
+  // }
+
   public populateLegend(
     dataPoints: LegendDataPoint[],
-    localizationManager: ILocalizationManager
+    lm: ILocalizationManager
   ) {
     const newSlices: FormattingSettingsSlice[] = [
       this.legendCardSettings.position,
       this.legendCardSettings.showTitle,
       this.legendCardSettings.titleText,
+
+      // keep this so typing doesn't "remove" it after the next update
+      this.legendCardSettings.legendSortOrder,
+
       this.legendCardSettings.labelColor,
       this.legendCardSettings.fontSize,
     ];
 
-    if (!dataPoints || dataPoints.length === 0) {
+    if (!dataPoints || !dataPoints.length) {
       this.legendCardSettings.slices = newSlices;
       return;
     }
 
-    for (const dataPoint of dataPoints) {
+    for (const dp of dataPoints) {
       newSlices.push(
         new formattingSettings.ColorPicker({
           name: "fill",
-          displayName:
-            dataPoint.label ||
-            localizationManager.getDisplayName("Visual_LegendColor"),
+          displayName: dp.label || lm.getDisplayName("Visual_LegendColor"),
           selector: ColorHelper.normalizeSelector(
-            (<ISelectionId>dataPoint.identity).getSelector(),
+            (<ISelectionId>dp.identity).getSelector(),
             false
           ),
-          value: { value: dataPoint.color },
+          value: { value: dp.color },
         })
       );
     }

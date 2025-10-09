@@ -446,6 +446,11 @@
               }
             }
           }
+        },
+        "legendSortOrder": {
+          "displayNameKey": "Legend_Sort_Order",
+          "description": "Comma/Semicolon separated list of legend labels in the desired order",
+          "type": { "text": true }
         }
       }
     },

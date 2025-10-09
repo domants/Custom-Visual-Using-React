@@ -2129,6 +2129,9 @@ export class Gantt implements IVisual {
       (x) => types[x.label]
     );
 
+    const dynamicOrder = Gantt.getLegendOrderFromSettings(settings);
+    Gantt.sortLegendDataPoints(legendData, dynamicOrder);
+
     return {
       dataView,
       settings,
@@ -2370,6 +2373,14 @@ export class Gantt implements IVisual {
     // const rb =
     //   options?.dataViews?.[0]?.metadata?.objects?.milestones?.roundedBars;
     // console.log(`roundedBars toggled to -> ${rb}`);
+  }
+
+  private safeX(d: Date | number): number {
+    const t =
+      this.hasNotNullableDates && Gantt.TimeScale
+        ? Gantt.TimeScale(d as any)
+        : 0;
+    return Number.isFinite(t) ? t : 0;
   }
 
   private updateInternal(options: VisualUpdateOptions): void {
@@ -3324,24 +3335,12 @@ export class Gantt implements IVisual {
     const xForMilestone = (start: Date, end: Date): number => {
       switch (pos) {
         case ResourceLabelPosition.Right:
-          return (
-            (this.hasNotNullableDates ? Gantt.TimeScale(end) : 0) +
-            fontPx / 2 +
-            Gantt.RectRound
-          );
-
+          return this.safeX(end) + fontPx / 2 + Gantt.RectRound;
         case ResourceLabelPosition.Top:
-          return (
-            (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
-            Gantt.RectRound
-          );
-
+          return this.safeX(start) + Gantt.RectRound;
         case ResourceLabelPosition.Inside:
         default:
-          return (
-            (this.hasNotNullableDates ? Gantt.TimeScale(start) : 0) +
-            this.PADDING_TEXT_INSIDE_BAR // 10px
-          );
+          return this.safeX(start) + this.PADDING_TEXT_INSIDE_BAR;
       }
     };
 
@@ -3380,7 +3379,10 @@ export class Gantt implements IVisual {
   ) {
     merged
       .classed("pos-inside", cfg.pos === ResourceLabelPosition.Inside)
-      .attr("x", (d: any) => xForMilestone(d.start, d.end))
+      .attr("x", (d: any) => {
+        const x = xForMilestone(d.start, d.end);
+        return Number.isFinite(x) ? x : 0;
+      })
       .attr("y", (d: any) => yForMilestone(d.row))
       .attr("text-anchor", "start")
       //.style("fill", cfg.fillColor)
@@ -4042,10 +4044,7 @@ export class Gantt implements IVisual {
 
     if (this.hasNotNullableDates) {
       merged
-        .attr(
-          "x",
-          (d: MilestonePath) => Gantt.TimeScale(d.start) + iconW + textPad
-        )
+        .attr("x", (d: MilestonePath) => this.safeX(d.start) + iconW + textPad)
         .attr("y", (d: MilestonePath) => {
           const yTop =
             Gantt.getBarYCoordinate(d.taskID, taskConfigHeight) +
@@ -4402,6 +4401,87 @@ export class Gantt implements IVisual {
         );
       });
     }
+  }
+
+  // Default order (used only if the text box is empty)
+  private static readonly DefaultLegendOrder: readonly string[] = [
+    "Pre-Rehearsal Activities",
+    "Rehearsal",
+    "Post-Rehearsal Activities",
+    "Pre-Cutover Activities",
+    "Cutover",
+    "Post-Cutover Activities",
+    "Public/Local Holiday",
+    "Other",
+  ] as const;
+
+  // private static getLegendOrderFromSettings(
+  //   settings: GanttChartSettingsModel
+  // ): string[] {
+  //   const raw = (settings?.legendCardSettings as any)?.legendSortOrder
+  //     ?.value as string | undefined;
+  //   if (!raw || !raw.trim()) return Array.from(Gantt.DefaultLegendOrder);
+
+  //   return raw
+  //     .split(/[;,|\n]/g)
+  //     .map((s) => s.trim())
+  //     .filter(Boolean);
+  // }
+
+  private static getLegendOrderFromSettings(
+    s: GanttChartSettingsModel
+  ): string[] {
+    const raw = s?.legendCardSettings?.legendSortOrder?.value as
+      | string
+      | undefined; // the variable
+    // (its .name is 'customOrder' so it maps to capabilities)
+    if (!raw) return [];
+    return raw
+      .split(/[;,|\n]/g)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+
+  // private static sortLegendDataPoints(
+  //   legendData: LegendData,
+  //   targetOrder: string[]
+  // ): void {
+  //   if (!legendData?.dataPoints?.length) return;
+
+  //   // Case-insensitive mapping: input may vary in capitalization
+  //   const indexByLower = new Map<string, number>(
+  //     targetOrder.map((name, i) => [name.toLowerCase(), i])
+  //   );
+
+  //   legendData.dataPoints.sort((a, b) => {
+  //     const al = (a.label || "").toLowerCase();
+  //     const bl = (b.label || "").toLowerCase();
+  //     const ai = indexByLower.has(al)
+  //       ? indexByLower.get(al)!
+  //       : Number.MAX_SAFE_INTEGER;
+  //     const bi = indexByLower.has(bl)
+  //       ? indexByLower.get(bl)!
+  //       : Number.MAX_SAFE_INTEGER;
+
+  //     if (ai !== bi) return ai - bi;
+
+  //     // For labels not present in the custom list, keep deterministic order
+  //     return (a.label || "").localeCompare(b.label || "");
+  //   });
+  // }
+
+  private static sortLegendDataPoints(legend: LegendData, order: string[]) {
+    if (!legend?.dataPoints?.length || !order.length) return;
+    const pos = new Map(order.map((v, i) => [v.toLowerCase(), i]));
+    legend.dataPoints.sort((a, b) => {
+      const ia = pos.has(a.label?.toLowerCase() ?? "")
+        ? pos.get(a.label!.toLowerCase())!
+        : 1e9;
+      const ib = pos.has(b.label?.toLowerCase() ?? "")
+        ? pos.get(b.label!.toLowerCase())!
+        : 1e9;
+      return ia !== ib ? ia - ib : (a.label || "").localeCompare(b.label || "");
+    });
   }
 
   private static ResourceFontColorByLegend: Record<string, string> = {
@@ -4963,13 +5043,30 @@ export class Gantt implements IVisual {
     );
   }
 
-  private getMilestoneLineLength(numOfTasks: number): number {
-    return (
-      numOfTasks *
-      ((this.viewModel.settings.taskConfigCardSettings.height.value ||
-        DefaultChartLineHeight) +
-        ((1 + numOfTasks) * this.getResourceLabelTopMargin()) / 2)
-    );
+  // private getMilestoneLineLength(numOfTasks: number): number {
+  //   return (
+  //     numOfTasks *
+  //     ((this.viewModel.settings.taskConfigCardSettings.height.value ||
+  //       DefaultChartLineHeight) +
+  //       ((1 + numOfTasks) * this.getResourceLabelTopMargin()) / 2)
+  //   );
+  // }
+
+  private getMilestoneLineLength(numRows: number): number {
+    const rowH =
+      this.viewModel.settings.taskConfigCardSettings.height.value ||
+      DefaultChartLineHeight;
+
+    const barH = Gantt.getBarHeight(rowH);
+    const last = Math.max(0, numRows - 1);
+
+    // Y position where the last bar starts (within chartGroup coords)
+    const yTop =
+      Gantt.getBarYCoordinate(last, rowH) +
+      (last + 1) * this.getResourceLabelTopMargin();
+
+    // Line should reach the bottom of the last bar
+    return yTop + barH;
   }
 
   public static downgradeDurationUnitIfNeeded(

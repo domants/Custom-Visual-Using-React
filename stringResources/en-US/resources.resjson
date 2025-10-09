@@ -92,6 +92,7 @@
 
   "Visual_Legend": "Legend",
   "Visual_LegendName": "Legend Name",
+  "Legend_Sort_Order": "Legend Sort Order",
   "Visual_LegendColor": "Legend color",
   "Visual_Show": "Show",
   "Visual_FullText": "Full text",
