@@ -8,7 +8,7 @@
 - Adjusted CSS styling to modify bar thickness.
 - Added conditional styling for Resource text font colors based on legend values -> `ResourceFontColorByLegend static method`.
 - Implemented dynamic legend sorting.
-  - Comma- or semicolon-separated; case-sensitive. Example: A,B,C,A or B;A — _note_ B and b are treated as distinct values.
+  - Comma- or semicolon-separated; case-sensitive. Example: `A,B,C,A or B;A — _note_ B and b are treated as distinct values.`
 
 ## 1.0.0.1
 
