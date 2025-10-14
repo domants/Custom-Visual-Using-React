@@ -143,7 +143,7 @@ https://localhost:8080/assets
 
 ---
 
-## 📚 Summary
+## Summary
 
 * **pbiviz** is the main tool for Power BI visuals.
 * Use **D3.js + React** to build interactive visuals.
