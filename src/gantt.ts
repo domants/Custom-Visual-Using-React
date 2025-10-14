@@ -3285,8 +3285,12 @@ export class Gantt implements IVisual {
         case ResourceLabelPosition.Top:
           return this.safeX(start) + Gantt.RectRound;
         case ResourceLabelPosition.Inside:
-        default:
-          return this.safeX(start) + this.PADDING_TEXT_INSIDE_BAR;
+        default: {
+          const w = this.hasNotNullableDates
+            ? Gantt.taskDurationToWidth(start, end)
+            : 0;
+          return this.safeX(start) + w / 2; // center of the bar
+        }
       }
     };
 
@@ -3328,8 +3332,10 @@ export class Gantt implements IVisual {
         return Number.isFinite(x) ? x : 0;
       })
       .attr("y", (d: any) => yForMilestone(d.row))
-      .attr("text-anchor", "start")
-
+      .attr(
+        "text-anchor",
+        cfg.pos === ResourceLabelPosition.Inside ? "middle" : "start"
+      )
       .style("fill", (_d: any, _i: number, nodes: any[]) => {
         const tempTaskLike = {
           resource: nodes[_i]?.__data__?.resource ?? "",
@@ -3415,6 +3421,11 @@ export class Gantt implements IVisual {
     this._prevResourcePos = cfg.pos;
 
     const { merged } = this.bindMsResNodes(taskSelection);
+    merged.classed(
+      "milestone-label-inside",
+      cfg.pos === ResourceLabelPosition.Inside
+    );
+
     this.resetClipAttrs(merged);
 
     const { xForMilestone, yForMilestone } = this.getMsResPositioners({
@@ -4408,7 +4419,17 @@ export class Gantt implements IVisual {
       .classed(
         "pos-inside",
         taskResourcePosition === ResourceLabelPosition.Inside
-      ) // hook class
+      )
+      .classed(
+        "task-label-inside",
+        taskResourcePosition === ResourceLabelPosition.Inside
+      )
+      .attr(
+        "text-anchor",
+        taskResourcePosition === ResourceLabelPosition.Inside
+          ? "middle"
+          : "start"
+      )
       .attr("x", (task: Task) =>
         this.getResourceLabelXCoordinate(
           task,
@@ -4431,13 +4452,10 @@ export class Gantt implements IVisual {
       .text(
         (task: Task) => (lodashIsEmpty(task.Milestones) && task.resource) || ""
       )
-
       .style("fill", (task: Task) =>
         this.getResourceFontColor(task, taskResourceColor)
       )
-
       .style("font-size", PixelConverter.fromPoint(taskResourceFontSize))
-
       .style(
         "alignment-baseline",
         taskResourcePosition === ResourceLabelPosition.Inside
@@ -4519,12 +4537,19 @@ export class Gantt implements IVisual {
         return (
           Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
         );
+
       case ResourceLabelPosition.Top:
         return Gantt.TimeScale(task.start) + Gantt.RectRound;
+
       case ResourceLabelPosition.Inside:
-      default:
-        // move text a bit from the bar's left
-        return Gantt.TimeScale(task.start) + this.PADDING_TEXT_INSIDE_BAR;
+      default: {
+        // center of the visible bar (respects full-day extension if enabled)
+        const startX = Gantt.TimeScale(task.start);
+        const visualEnd = this.getVisualEndForTask(task) || task.end;
+        const endX = Gantt.TimeScale(visualEnd);
+        const width = Math.max(0, endX - startX);
+        return startX + width / 2;
+      }
     }
   }
 
