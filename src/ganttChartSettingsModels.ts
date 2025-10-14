@@ -669,6 +669,13 @@ export class TaskResourceCardSettings extends Card {
     },
   });
 
+  fontWeight = new formattingSettings.TextInput({
+    name: "fontWeight",
+    displayNameKey: "Visual_FontWeight",
+    placeholder: "e.g., 400, 500, 600, 700",
+    value: "",
+  });
+
   position = new formattingSettings.ItemDropdown({
     name: "position",
     displayNameKey: "Visual_Position",
@@ -691,9 +698,11 @@ export class TaskResourceCardSettings extends Card {
   visible: boolean = true;
   name: string = "taskResource";
   displayNameKey: string = "Visual_DataLabels";
+
   slices = [
     this.fill,
     this.fontSize,
+    this.fontWeight,
     this.position,
     this.fullText,
     this.widthByTask,

@@ -706,6 +706,11 @@
             }
           }
         },
+        "fontWeight": {
+          "type": {
+            "text": true
+          }
+        },
         "position": {
           "type": {
             "text": true

@@ -196,6 +196,7 @@ import createLegend = LegendModule.createLegend;
 import LegendDataPoint = legendInterfaces.LegendDataPoint;
 
 import IAxisProperties = axisInterfaces.IAxisProperties;
+import { fontWeightProperty } from "powerbi-visuals-utils-svgutils/lib/cssConstants";
 
 const PercentFormat: string = "0.00 %;-0.00 %;0.00 %";
 const ScrollMargin: number = 100;
@@ -3336,6 +3337,13 @@ export class Gantt implements IVisual {
         "text-anchor",
         cfg.pos === ResourceLabelPosition.Inside ? "middle" : "start"
       )
+
+      .style(
+        "font-weight",
+        cfg.pos === ResourceLabelPosition.Inside
+          ? 400 /* 700 - bold - for milestone bar text - [Currently controlled by CSS] */
+          : null
+      )
       .style("fill", (_d: any, _i: number, nodes: any[]) => {
         const tempTaskLike = {
           resource: nodes[_i]?.__data__?.resource ?? "",
@@ -4456,6 +4464,13 @@ export class Gantt implements IVisual {
         this.getResourceFontColor(task, taskResourceColor)
       )
       .style("font-size", PixelConverter.fromPoint(taskResourceFontSize))
+
+      .style(
+        "font-weight",
+        taskResourcePosition === ResourceLabelPosition.Inside
+          ? this.getUserFontWeight() /*700 - bold - for non-milestone bar text */
+          : null
+      )
       .style(
         "alignment-baseline",
         taskResourcePosition === ResourceLabelPosition.Inside
@@ -4474,6 +4489,38 @@ export class Gantt implements IVisual {
     );
 
     taskResource.exit().remove();
+  }
+
+  private getUserFontWeight(): string {
+    // If you put the setting on a different card, adjust these paths:
+    const fromTaskRes = (this.viewModel?.settings as any)
+      ?.taskResourceCardSettings?.fontWeight?.value;
+    const fromMsCard = (this.viewModel?.settings as any)?.milestonesCardSettings
+      ?.fontWeight?.value;
+
+    const raw = (fromTaskRes ?? fromMsCard ?? "").toString().trim();
+    if (!raw) return "400";
+
+    const kw = raw.toLowerCase();
+    if (kw === "normal") return "400";
+    if (kw === "bold") return "700";
+
+    const n = parseInt(raw, 10);
+    if (!isNaN(n)) {
+      const allowed = [400, 500, 600, 700];
+      let best = allowed[0],
+        bestDiff = Math.abs(n - best);
+      for (let i = 1; i < allowed.length; i++) {
+        const diff = Math.abs(n - allowed[i]);
+        if (diff < bestDiff) {
+          best = allowed[i];
+          bestDiff = diff;
+        }
+      }
+      return String(best);
+    }
+
+    return "400"; //fallback
   }
 
   private static getSameRowNextTaskStartDate(
