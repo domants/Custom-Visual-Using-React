@@ -2429,9 +2429,9 @@ export class Gantt implements IVisual {
     const showBand =
       this.viewModel?.settings?.categorySettings?.showGlobalBand?.value ===
       true;
-    // Change Freeze band (December 15, 2025 –  December 24, 2025)
-    const freezeStart = new Date(2025, 11, 15); // Dec 15, 2025
-    const freezeEndExclusive = Gantt.daySpan(new Date(2025, 11, 24)).end; // Dec 24, 00:00
+    // Change Freeze band (December 19, 2025 –  January 5, 2026)
+    const freezeStart = new Date(2025, 11, 19); // Dec 19, 2025
+    const freezeEndExclusive = Gantt.daySpan(new Date(2026, 0, 5)).end; // Jan 5, 2026
 
     if (showBand) {
       this.renderGlobalBand(
