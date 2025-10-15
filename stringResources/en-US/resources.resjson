@@ -76,6 +76,7 @@
 
   "Visual_GroupTasks": "Group Tasks",
   "Visual_General_ParentSwimlane_Fill":"Parent Timeline Background Fill",
+  "Visual_ShowGlobalBand":"Show Global Band",
   "Visual_ScrollToCurrentTime": "Scroll to current time",
   "Visual_Full_Day_Bars_ForTasks":"Full Day Bar",
   "Visual_Milestone_ShowTodayLine":"Show Todays Line",

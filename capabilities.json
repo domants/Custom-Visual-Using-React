@@ -584,6 +584,12 @@
         "parentSwimlaneFill": {
           "displayNameKey": "Visual_General_ParentSwimlane_Fill",
           "type": { "fill": { "solid": { "color": true } } }
+        },
+        "showGlobalBand": {
+          "displayNameKey": "Visual_ShowGlobalBand",
+          "type": {
+            "bool": true
+          }
         }
       }
     },

@@ -196,7 +196,6 @@ import createLegend = LegendModule.createLegend;
 import LegendDataPoint = legendInterfaces.LegendDataPoint;
 
 import IAxisProperties = axisInterfaces.IAxisProperties;
-import { fontWeightProperty } from "powerbi-visuals-utils-svgutils/lib/cssConstants";
 
 const PercentFormat: string = "0.00 %;-0.00 %;0.00 %";
 const ScrollMargin: number = 100;
@@ -2427,6 +2426,21 @@ export class Gantt implements IVisual {
     this.updateCommonTasks(groupedTasks);
     this.updateCommonMilestones(groupedTasks);
 
+    const showBand =
+      this.viewModel?.settings?.categorySettings?.showGlobalBand?.value ===
+      true;
+    // Change Freeze band (December 15, 2025 –  December 24, 2025)
+    const freezeStart = new Date(2025, 11, 15); // Dec 15, 2025
+    const freezeEndExclusive = Gantt.daySpan(new Date(2025, 11, 24)).end; // Dec 24, 00:00
+
+    this.renderGlobalBand(
+      showBand,
+      freezeStart,
+      freezeEndExclusive,
+      "#a1a0a0ff",
+      0.8 /*opacity*/
+    );
+
     const tasksAfterGrouping: Task[] = groupedTasks.flatMap((t) => t.tasks);
     const minDateTask: Task = lodashMinBy(
       tasksAfterGrouping,
@@ -2476,6 +2490,21 @@ export class Gantt implements IVisual {
       Gantt.TimeScale = <ScaleTime<number, number>>xAxisProperties.scale;
 
       this.renderAxis(xAxisProperties);
+
+      const showBand =
+        this.viewModel?.settings?.categorySettings?.showGlobalBand?.value ===
+        true;
+
+      const freezeStart = new Date(2025, 11, 15); // 2025-12-15
+      const freezeEndExclusive = Gantt.daySpan(new Date(2025, 11, 24)).end; // 2025-12-24 00:00
+
+      this.renderGlobalBandToggle(
+        showBand,
+        freezeStart,
+        freezeEndExclusive,
+        "#a1a0a0ff", // fill
+        0.8 // opacity
+      );
     }
 
     axisLength = this.scaleAxisLength(axisLength);
@@ -4939,6 +4968,72 @@ export class Gantt implements IVisual {
       selection,
       (tooltipEvent: TooltipEnabledDataPoint) => tooltipEvent.tooltipInfo
     );
+  }
+
+  /**
+   * Wrapper that clears existing band when disabled, otherwise draws it.
+   */
+  private renderGlobalBandToggle(
+    enabled: boolean,
+    start: Date,
+    end: Date,
+    fill: string,
+    opacity: number
+  ): void {
+    this.chartGroup
+      ?.selectAll<SVGRectElement, any>("rect.change-freeze-band")
+      .remove();
+
+    if (!enabled) return;
+
+    this.renderGlobalBand(start, end, fill, opacity);
+  }
+
+  // Render the global band spanning the full swimlane area
+  private renderGlobalBand(
+    start: Date,
+    end: Date,
+    fill: string = "#a1a0a0ff", // default grey
+    opacity = 0.35 // default 35%
+  ): void {
+    if (!this.hasNotNullableDates || !Gantt.TimeScale) {
+      this.chartGroup?.selectAll("rect.change-freeze-band").remove();
+      return;
+    }
+
+    const x1 = this.safeX(start);
+    const x2 = this.safeX(end);
+    const x = Math.min(x1, x2);
+    const w = Math.max(0, Math.abs(x2 - x1));
+
+    const visibleRowCount = this.viewModel.tasks.filter(
+      (t) => t.visibility
+    ).length;
+    const h = this.getMilestoneLineLength(visibleRowCount);
+
+    const sel = this.chartGroup
+      .selectAll<SVGRectElement, any>("rect.change-freeze-band")
+      .data(w > 0 ? [{ x, w, h }] : [], () => "change-freeze-static");
+
+    sel.exit().remove();
+
+    const merged = sel
+      .enter()
+      .append("rect")
+      .classed("change-freeze-band", true)
+      .merge(sel as any);
+
+    merged
+      .attr("x", (d) => d.x)
+      .attr("y", 0)
+      .attr("width", (d) => d.w)
+      .attr("height", (d) => d.h)
+      .attr("rx", 0) // square corners
+      .attr("ry", 0)
+      .style("fill", fill)
+      .style("opacity", opacity)
+      .style("pointer-events", "none")
+      .raise(); // draw on top within chartGroup
   }
 
   private updateElementsPositions(margin: IMargin): void {

@@ -487,9 +487,21 @@ export class CategorySettings extends Card {
     value: { value: "#FFF9D6" },
   });
 
+  showGlobalBand = new formattingSettings.ToggleSwitch({
+    name: "showGlobalBand",
+    displayNameKey: "Visual_ShowGlobalBand",
+    value: true,
+  });
+
   name: string = "categorySettings";
   displayNameKey: string = "Visual_CategorySettings";
-  slices = [this.fill, this.fontSize, this.width, this.parentSwimlaneFill];
+  slices = [
+    this.fill,
+    this.fontSize,
+    this.width,
+    this.parentSwimlaneFill,
+    this.showGlobalBand,
+  ];
   topLevelSlice?: formattingSettings.SimpleSlice<any> = this.show;
 }
 
