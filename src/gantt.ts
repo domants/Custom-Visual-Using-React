@@ -2426,22 +2426,6 @@ export class Gantt implements IVisual {
     this.updateCommonTasks(groupedTasks);
     this.updateCommonMilestones(groupedTasks);
 
-    const showBand =
-      this.viewModel?.settings?.categorySettings?.showGlobalBand?.value ===
-      true;
-    // Change Freeze band (December 19, 2025 –  January 5, 2026)
-    const freezeStart = new Date(2025, 11, 19); // Dec 19, 2025
-    const freezeEndExclusive = Gantt.daySpan(new Date(2026, 0, 5)).end; // Jan 5, 2026
-
-    if (showBand) {
-      this.renderGlobalBand(
-        freezeStart,
-        freezeEndExclusive,
-        "#a1a0a0ff",
-        0.8 /*opacity*/
-      );
-    }
-
     const tasksAfterGrouping: Task[] = groupedTasks.flatMap((t) => t.tasks);
     const minDateTask: Task = lodashMinBy(
       tasksAfterGrouping,
@@ -2492,12 +2476,14 @@ export class Gantt implements IVisual {
 
       this.renderAxis(xAxisProperties);
 
+      // Show the global band
       const showBand =
         this.viewModel?.settings?.categorySettings?.showGlobalBand?.value ===
         true;
 
-      const freezeStart = new Date(2025, 11, 15); // 2025-12-15
-      const freezeEndExclusive = Gantt.daySpan(new Date(2025, 11, 24)).end; // 2025-12-24 00:00
+      // Freeze: Dec 19, 2025 through Jan 5, 2026 (inclusive).
+      const freezeStart = new Date(2025, 11, 19); // 2025-12-19
+      const freezeEndExclusive = Gantt.daySpan(new Date(2026, 0, 5)).end; // 2026-01-06
 
       this.renderGlobalBandToggle(
         showBand,
