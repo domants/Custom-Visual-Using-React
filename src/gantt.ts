@@ -2433,13 +2433,14 @@ export class Gantt implements IVisual {
     const freezeStart = new Date(2025, 11, 15); // Dec 15, 2025
     const freezeEndExclusive = Gantt.daySpan(new Date(2025, 11, 24)).end; // Dec 24, 00:00
 
-    this.renderGlobalBand(
-      showBand,
-      freezeStart,
-      freezeEndExclusive,
-      "#a1a0a0ff",
-      0.8 /*opacity*/
-    );
+    if (showBand) {
+      this.renderGlobalBand(
+        freezeStart,
+        freezeEndExclusive,
+        "#a1a0a0ff",
+        0.8 /*opacity*/
+      );
+    }
 
     const tasksAfterGrouping: Task[] = groupedTasks.flatMap((t) => t.tasks);
     const minDateTask: Task = lodashMinBy(

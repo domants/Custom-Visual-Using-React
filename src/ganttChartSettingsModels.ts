@@ -484,7 +484,7 @@ export class CategorySettings extends Card {
   parentSwimlaneFill = new formattingSettings.ColorPicker({
     name: "parentSwimlaneFill",
     displayNameKey: "Visual_General_ParentSwimlane_Fill",
-    value: { value: "#FFF9D6" },
+    value: { value: "#E6E6E6" },
   });
 
   showGlobalBand = new formattingSettings.ToggleSwitch({
