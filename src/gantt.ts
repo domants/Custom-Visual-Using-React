@@ -4596,10 +4596,14 @@ export class Gantt implements IVisual {
     if (!this.hasNotNullableDates) return 0;
 
     switch (taskResourcePosition) {
-      case ResourceLabelPosition.Right:
+      case ResourceLabelPosition.Right: {
+        const visualEnd = this.getVisualEndForTask(task) || task.end;
         return (
-          Gantt.TimeScale(task.end) + taskResourceFontSize / 2 + Gantt.RectRound
+          Gantt.TimeScale(visualEnd) +
+          taskResourceFontSize / 2 +
+          Gantt.RectRound
         );
+      }
 
       case ResourceLabelPosition.Top:
         return Gantt.TimeScale(task.start) + Gantt.RectRound;
