@@ -1,3 +1,8 @@
+## 1.0.0.3
+
+- Added day value eg., Mon, Tues, Wed... For Date type eq Day.
+- Update: `DateFormatStrings from MMM dd to MMM dd|ddd`
+
 ## 1.0.0.2
 
 - Added `Full Day Bars` toggle for non-milestone bars — `visually extends the bar by one day` (e.g., end date is Oct 10, 2025, bar extends to Oct 11, 2025) without changing the actual end date value.

@@ -2482,7 +2482,8 @@ export class Gantt implements IVisual {
       this.xAxisProperties = xAxisProperties;
       Gantt.TimeScale = <ScaleTime<number, number>>xAxisProperties.scale;
 
-      this.renderAxis(xAxisProperties);
+      //this.renderAxis(xAxisProperties);
+      this.renderAxis(xAxisProperties, isDay ? 0 : Gantt.DefaultDuration); //Skip the axis animation in Day mode
 
       // Show the global band
       const showBand =
@@ -2825,7 +2826,17 @@ export class Gantt implements IVisual {
       this.viewModel.settings.dateTypeCardSettings.axisTextColor.value.value;
 
     const xAxis = xAxisProperties.axis;
-    xAxis.tickPadding(9); // room for two lines
+    xAxis.tickPadding(9); //for two lines
+
+    const target =
+      duration > 0
+        ? this.axisGroup.transition().duration(duration)
+        : this.axisGroup.interrupt(); // stop any previous anim
+
+    target.call(xAxis);
+
+    this.multilineDayTicks();
+    this.resizeAxisHeaderForDay();
 
     this.axisGroup.call(xAxis.tickSizeOuter(xAxisProperties.outerPadding));
 
@@ -2834,7 +2845,6 @@ export class Gantt implements IVisual {
       .duration(duration)
       .call(xAxis)
       .on("end", () => {
-        // do this AFTER ticks exist
         this.multilineDayTicks();
         this.resizeAxisHeaderForDay();
       });
