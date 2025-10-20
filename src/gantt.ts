@@ -346,7 +346,7 @@ export class Gantt implements IVisual {
       Second: "HH:mm:ss",
       Minute: "HH:mm",
       Hour: "HH:mm (dd)",
-      Day: "MMM dd",
+      Day: "MMM dd|ddd", // was "MMM dd - ddd"
       Week: "MMM dd",
       Month: "MMM yyyy",
       Quarter: "MMM yyyy",
@@ -361,7 +361,7 @@ export class Gantt implements IVisual {
   private static TaskLineCoordinateX: number = 15;
   private static AxisLabelClip: number = 40;
   private static AxisLabelStrokeWidth: number = 1;
-  private static AxisTopMargin: number = 6;
+  private static AxisTopMargin: number = 15;
   private static CollapseAllLeftShift: number = 7.5;
   private static BarHeightMargin: number = 5;
   private static ChartLineHeightDivider: number = 4;
@@ -2393,6 +2393,14 @@ export class Gantt implements IVisual {
   private render(): void {
     const settings = this.viewModel.settings;
 
+    const isDay =
+      DateType[settings.dateTypeCardSettings.type.value.value] === DateType.Day;
+
+    this.margin = Gantt.DefaultMargin;
+    if (isDay) {
+      this.margin.top = Math.max(this.margin.top, 58); // try 58–62 if still tight
+    }
+
     this.renderLegend();
     this.updateChartSize();
 
@@ -2777,33 +2785,81 @@ export class Gantt implements IVisual {
     );
   }
 
+  private multilineDayTicks(): void {
+    const isDay =
+      DateType[
+        this.viewModel.settings.dateTypeCardSettings.type.value.value
+      ] === DateType.Day;
+    if (!isDay) return;
+
+    const ticks = this.axisGroup.selectAll<SVGTextElement, any>(".tick text");
+    ticks.each((_d, _i, nodes) => {
+      const el = d3Select(nodes[_i]);
+      const raw = (el.text() || "").trim(); // e.g. "Oct 20|Mon"
+      const parts = raw.split("|");
+      const top = parts[0] ?? raw;
+      const bottom = parts[1] ?? "";
+
+      // clear and rebuild as two lines
+      el.text(null);
+
+      el.append("tspan")
+        .attr("x", 0)
+        .attr("dy", "0") // first line baseline
+        .text(top);
+
+      el.append("tspan")
+        .attr("x", 0)
+        .attr("dy", "1.2em") // second line below
+        .text(bottom);
+    });
+  }
+
   private renderAxis(
     xAxisProperties: IAxisProperties,
     duration: number = Gantt.DefaultDuration
   ): void {
-    const axisColor: string =
+    const axisColor =
       this.viewModel.settings.dateTypeCardSettings.axisColor.value.value;
-    const axisTextColor: string =
+    const axisTextColor =
       this.viewModel.settings.dateTypeCardSettings.axisTextColor.value.value;
 
     const xAxis = xAxisProperties.axis;
+    xAxis.tickPadding(9); // room for two lines
+
     this.axisGroup.call(xAxis.tickSizeOuter(xAxisProperties.outerPadding));
 
-    this.axisGroup.transition().duration(duration).call(xAxis);
+    this.axisGroup
+      .transition()
+      .duration(duration)
+      .call(xAxis)
+      .on("end", () => {
+        // do this AFTER ticks exist
+        this.multilineDayTicks();
+        this.resizeAxisHeaderForDay();
+      });
 
     this.axisGroup.selectAll("path").style("stroke", axisColor);
-
     this.axisGroup
       .selectAll(".tick line")
-      .style("stroke", (timestamp: number) =>
-        this.setTickColor(timestamp, axisColor)
-      );
-
+      .style("stroke", (t: number) => this.setTickColor(t, axisColor));
     this.axisGroup
       .selectAll(".tick text")
-      .style("fill", (timestamp: number) =>
-        this.setTickColor(timestamp, axisTextColor)
-      );
+      .style("fill", (t: number) => this.setTickColor(t, axisTextColor));
+  }
+
+  private resizeAxisHeaderForDay(): void {
+    const isDay =
+      DateType[
+        this.viewModel.settings.dateTypeCardSettings.type.value.value
+      ] === DateType.Day;
+    const headerRect = this.axisGroup.select("rect"); // created in createViewport()
+
+    if (isDay) {
+      headerRect.attr("y", "-28").attr("height", 56); // taller band for two lines
+    } else {
+      headerRect.attr("y", "-20").attr("height", 40);
+    }
   }
 
   private setTickColor(timestamp: number, defaultColor: string): string {
