@@ -346,7 +346,7 @@ export class Gantt implements IVisual {
       Second: "HH:mm:ss",
       Minute: "HH:mm",
       Hour: "HH:mm (dd)",
-      Day: "MMM dd|ddd", // was "MMM dd - ddd"
+      Day: "MMM dd|ddd", // was "MMM dd"
       Week: "MMM dd",
       Month: "MMM yyyy",
       Quarter: "MMM yyyy",
